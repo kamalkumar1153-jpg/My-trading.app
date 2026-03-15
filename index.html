@@ -9,7 +9,7 @@
         body { background: #0b0e14; color: white; font-family: sans-serif; margin: 0; padding: 10px; text-align: center; }
         .container { max-width: 800px; margin: auto; background: #1e222d; padding: 20px; border-radius: 15px; border: 1px solid #363c4e; }
         select { width: 100%; padding: 12px; border-radius: 8px; background: #2a2e39; color: white; border: 1px solid #363c4e; margin-bottom: 15px; font-size: 16px; }
-        #chart_container { height: 400px; width: 100%; border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+        #chart_container { height: 450px; width: 100%; border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
         .signal-box { background: #2a2e39; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 5px solid #2962ff; }
         #signalText { font-size: 28px; font-weight: bold; margin: 10px 0; }
         .refresh-btn { width: 100%; padding: 15px; background: #2962ff; color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; }
@@ -19,10 +19,10 @@
     <div class="container">
         <h1>📊 AI Trading Terminal</h1>
         <select id="stockSelect" onchange="updateApp()">
-            <option value="NIFTY">Nifty 50 (Index)</option>
-            <option value="SENSEX">Sensex (Index)</option>
-            <option value="RELIANCE">Reliance (Stock)</option>
-            <option value="BTCUSD">Bitcoin (Crypto)</option>
+            <option value="NSE:NIFTY">Nifty 50 (Index)</option>
+            <option value="BSE:SENSEX">Sensex (Index)</option>
+            <option value="NSE:RELIANCE">Reliance (Stock)</option>
+            <option value="BINANCE:BTCUSDT">Bitcoin (Crypto)</option>
         </select>
         <div id="chart_container"></div>
         <div class="signal-box">
@@ -33,34 +33,56 @@
     </div>
     <script>
         const API_KEY = "116ae9781b96425181ecce7d513022bc"; 
+
         function loadChart(symbol) {
-            let tvSymbol = (symbol === "NIFTY") ? "NSE:NIFTY" : (symbol === "SENSEX") ? "BSE:SENSEX" : (symbol.includes("USD")) ? "BINANCE:" + symbol : "NSE:" + symbol;
-            new TradingView.widget({"container_id": "chart_container", "autosize": true, "symbol": tvSymbol, "interval": "D", "theme": "dark", "style": "1", "locale": "in"});
+            document.getElementById("chart_container").innerHTML = ""; // पुराना चार्ट साफ करने के लिए
+            new TradingView.widget({
+                "container_id": "chart_container",
+                "autosize": true,
+                "symbol": symbol,
+                "interval": "D",
+                "timezone": "Asia/Kolkata",
+                "theme": "dark",
+                "style": "1",
+                "locale": "in",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "hide_top_toolbar": false,
+                "save_image": false
+            });
         }
+
         async function fetchRSISignal() {
-            const symbol = document.getElementById("stockSelect").value;
+            let symbol = document.getElementById("stockSelect").value;
+            // API के लिए नाम छोटा करना (जैसे NSE:NIFTY से NIFTY)
+            let apiSymbol = symbol.split(":")[1]; 
+            if(apiSymbol === "NIFTY") apiSymbol = "NIFTY50";
+
             try {
-                let apiSymbol = (symbol === "NIFTY") ? "NIFTY50" : (symbol === "BTCUSD") ? "BTC/USD" : symbol;
                 const url = `https://api.twelvedata.com/rsi?symbol=${apiSymbol}&interval=1day&time_period=14&apikey=${API_KEY}`;
                 const response = await fetch(url);
                 const data = await response.json();
-                if (data.values && data.values.length > 0) {
+                if (data.values) {
                     const rsi = parseFloat(data.values[0].rsi).toFixed(2);
-                    document.getElementById("rsiValue").innerText = `RSI (${symbol}): ${rsi}`;
+                    document.getElementById("rsiValue").innerText = `RSI: ${rsi}`;
                     if (rsi <= 35) updateUI("STRONG BUY 📈", "#22c55e");
                     else if (rsi >= 65) updateUI("STRONG SELL 📉", "#ef4444");
                     else updateUI("HOLD 🤝", "#eab308");
-                } else { document.getElementById("signalText").innerText = "API Limit! Wait 1m"; }
-            } catch (e) { document.getElementById("signalText").innerText = "Error Loading Data"; }
+                }
+            } catch (e) { console.log("RSI Error"); }
         }
+
         function updateUI(text, color) {
             const el = document.getElementById("signalText");
             el.innerText = text; el.style.color = color;
         }
+
         function updateApp() {
             const symbol = document.getElementById("stockSelect").value;
-            loadChart(symbol); fetchRSISignal();
+            loadChart(symbol);
+            fetchRSISignal();
         }
+
         window.onload = updateApp;
     </script>
 </body>
