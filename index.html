@@ -24,18 +24,18 @@
 
     <div class="ai-signals">
         <div class="signal-box">
-            <div style="font-size: 11px; color: #8b949e;">NIFTY 50 (ETF)</div>
+            <div style="font-size: 11px; color: #8b949e;">NIFTY 50 (FUTURES)</div>
             <div class="status">STRONG BUY 🟢</div>
         </div>
         <div class="signal-box">
-            <div style="font-size: 11px; color: #8b949e;">SENSEX (ETF)</div>
+            <div style="font-size: 11px; color: #8b949e;">SENSEX</div>
             <div class="status">STRONG BUY 🟢</div>
         </div>
     </div>
 
     <div class="btn-group">
-        <button onclick="change('NSE:NIFBEES')">🇮🇳 Nifty 50</button>
-        <button onclick="change('BSE:SENSEXET')">🇮🇳 Sensex</button>
+        <button onclick="change('NSE:NIFTY1!')">🇮🇳 Nifty 50</button>
+        <button onclick="change('BSE:SENSEX')">🇮🇳 Sensex</button>
         <button onclick="change('BINANCE:BTCUSDT')">₿ Bitcoin</button>
     </div>
 
@@ -64,10 +64,12 @@
             document.getElementById("tv_chart").innerHTML = "";
             loadChart(s);
         }
-        window.onload = function() { loadChart("NSE:NIFBEES"); };
+        // शुरुआत में निफ्टी फ्यूचर्स लोड होगा
+        window.onload = function() { loadChart("NSE:NIFTY1!"); };
     </script>
 </body>
 </html>
+
 
 
 
