@@ -5,7 +5,7 @@ from nsepython import *
 
 # 1. अपना असली Firebase URL यहाँ डालें (अंत में market_data.json ज़रूर लगाएँ)
 FIREBASE_URL = "https://your-project-id.firebaseio.com/market_data.json"
-
+https://market--treminal-default-rtdb.firebaseio.com
 def get_market_sentiment():
     try:
         # NSE से निफ्टी ऑप्शन चेन का डेटा लें
