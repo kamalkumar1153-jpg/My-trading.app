@@ -15,7 +15,8 @@
         .btn-group { margin: 10px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
         button { background: #21262d; color: white; border: 1px solid #30363d; padding: 10px 15px; cursor: pointer; border-radius: 8px; font-weight: bold; }
         button:hover { background: var(--gold); color: black; }
-        #chart_area { height: 60vh; width: 98%; margin: auto; border-radius: 12px; overflow: hidden; border: 1px solid #30363d; }
+        /* चार्ट का एरिया सेट करना ज़रूरी है वरना वो नहीं दिखेगा */
+        #tv_chart_container { height: 500px; width: 95%; margin: 20px auto; border-radius: 12px; border: 1px solid #30363d; }
     </style>
 </head>
 <body>
@@ -24,7 +25,7 @@
 
     <div class="ai-signals">
         <div class="signal-box">
-            <div style="font-size: 11px; color: #8b949e;">NIFTY 50 (GIFT)</div>
+            <div style="font-size: 11px; color: #8b949e;">NIFTY 50 (LIVE)</div>
             <div class="status">STRONG BUY 🟢</div>
         </div>
         <div class="signal-box">
@@ -32,44 +33,42 @@
             <div class="status">STRONG BUY 🟢</div>
         </div>
     </div>
-<div class="btn-group">
-    <button onclick="change('NSE:NIFTYBEES')">🇮🇳 Nifty 50</button>
-    <button onclick="change('BSE:SENSEX')">🇮🇳 Sensex</button>
-    <button onclick="change('BINANCE:BTCUSDT')">₿ Bitcoin</button>
-</div>
 
-<script>
-    // डिफ़ॉल्ट लोडिंग के लिए भी CAPITAL LETTERS का ही इस्तेमाल करें
-    window.onload = function() { 
-        loadChart("NSE:NIFTYBEES"); 
-    };
-</script>
-    
-    
+    <div class="btn-group">
+        <button onclick="change('NSE:NIFTYBEES')">🇮🇳 Nifty 50</button>
+        <button onclick="change('BSE:SENSEX')">🇮🇳 Sensex</button>
+        <button onclick="change('BINANCE:BTCUSDT')">₿ Bitcoin</button>
+    </div>
+
+    <div id="tv_chart_container"></div>
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script type="text/javascript">
-        function loadChart(symbol) {
+        function loadChart(symbolName) {
             new TradingView.widget({
                 "autosize": true,
-                "symbol": symbol,
-                "interval": "D", 
+                "symbol": symbolName,
+                "interval": "D",
                 "timezone": "Asia/Kolkata",
                 "theme": "dark",
                 "style": "1",
                 "locale": "in",
-                "container_id": "tv_chart",
+                "container_id": "tv_chart_container",
                 "hide_side_toolbar": false,
                 "allow_symbol_change": true,
                 "save_image": false
             });
         }
+
         function change(s) {
-            document.getElementById("tv_chart").innerHTML = "";
+            document.getElementById("tv_chart_container").innerHTML = "";
             loadChart(s);
         }
-        // // और नीचे यहाँ भी:
-        window.onload = function() { loadChart("nse:nifbees"); };
+
+        // वेबसाइट खुलते ही NiftyBees लोड होगा
+        window.onload = function() {
+            loadChart("NSE:NIFTYBEES");
+        };
     </script>
 </body>
 </html>
