@@ -3,24 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kamal AI Terminal Pro</title>
+    <title>Kamal AI Pro Terminal</title>
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --gold: #f0b90b; --green: #0ecb81; --red: #f6465d; }
-        body { background-color: var(--bg); color: white; font-family: sans-serif; margin: 0; text-align: center; }
-        
+        :root { --bg: #0d1117; --card: #161b22; --gold: #f0b90b; --green: #0ecb81; }
+        body { background-color: var(--bg); color: white; font-family: sans-serif; margin: 0; padding: 0; text-align: center; }
         .header { padding: 15px; background: var(--card); color: var(--gold); font-size: 20px; font-weight: bold; border-bottom: 1px solid #30363d; }
         
-        /* AI Signal Style */
+        /* AI Signal Box */
         .ai-signals { display: flex; justify-content: center; gap: 10px; padding: 15px; flex-wrap: wrap; }
-        .signal-box { background: var(--card); padding: 10px; border-radius: 10px; border: 1px solid #30363d; min-width: 140px; }
-        .buy-text { color: var(--green); font-weight: bold; animation: blink 1.5s infinite; }
+        .signal-box { background: var(--card); padding: 12px; border-radius: 10px; border: 1px solid #30363d; min-width: 130px; }
+        .status { color: var(--green); font-weight: bold; animation: blink 1.5s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        .btn-group { margin-bottom: 15px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .btn-group { margin: 10px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
         button { background: #21262d; color: white; border: 1px solid #30363d; padding: 10px 15px; cursor: pointer; border-radius: 8px; font-weight: bold; }
         button:hover { background: var(--gold); color: black; }
 
-        #chart_area { height: 65vh; width: 98%; margin: auto; border-radius: 12px; overflow: hidden; border: 1px solid #30363d; }
+        .main-container { display: flex; flex-direction: column; gap: 15px; padding: 10px; }
+        #chart_area { height: 55vh; border-radius: 12px; overflow: hidden; border: 1px solid #30363d; }
+        #news_area { height: 300px; border-radius: 12px; overflow: hidden; border: 1px solid #30363d; }
     </style>
 </head>
 <body>
@@ -29,23 +30,42 @@
 
     <div class="ai-signals">
         <div class="signal-box">
-            <div>NIFTY 50</div>
-            <div class="buy-text">STRONG BUY 🟢</div>
+            <div style="font-size: 11px; color: #8b949e;">NIFTY 50</div>
+            <div class="status">STRONG BUY 🟢</div>
         </div>
         <div class="signal-box">
-            <div>SENSEX</div>
-            <div class="buy-text">STRONG BUY 🟢</div>
+            <div style="font-size: 11px; color: #8b949e;">SENSEX</div>
+            <div class="status">STRONG BUY 🟢</div>
         </div>
     </div>
 
     <div class="btn-group">
-        <button onclick="changeSymbol('NSE:NIFTY')">🇮🇳 Nifty 50</button>
-        <button onclick="changeSymbol('BSE:SENSEX')">🇮🇳 Sensex</button>
-        <button onclick="changeSymbol('BINANCE:BTCUSDT')">₿ Bitcoin</button>
+        <button onclick="change('NSE:NIFTY')">🇮🇳 Nifty 50</button>
+        <button onclick="change('BSE:SENSEX')">🇮🇳 Sensex</button>
+        <button onclick="change('BINANCE:BTCUSDT')">₿ Bitcoin</button>
     </div>
 
-    <div id="chart_area">
-        <div id="tv_chart"></div>
+    <div class="main-container">
+        <div id="chart_area">
+            <div id="tv_chart" style="height:100%;"></div>
+        </div>
+
+        <div id="news_area">
+            <div class="tradingview-widget-container">
+                <div class="tradingview-widget-container__widget"></div>
+                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+                {
+                "feedMode": "all_symbols",
+                "colorTheme": "dark",
+                "isTransparent": false,
+                "displayMode": "regular",
+                "width": "100%",
+                "height": "100%",
+                "locale": "in"
+                }
+                </script>
+            </div>
+        </div>
     </div>
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
@@ -60,22 +80,15 @@
                 "style": "1",
                 "locale": "in",
                 "container_id": "tv_chart",
-                "hide_side_toolbar": false,
-                "allow_symbol_change": true,
-                "details": true,
-                "hotlist": true,
-                "calendar": true
+                "allow_symbol_change": true
             });
         }
-
-        function changeSymbol(s) {
+        function change(s) {
             document.getElementById("tv_chart").innerHTML = "";
             loadChart(s);
         }
-
-        window.onload = function() {
-            loadChart("NSE:NIFTY");
-        };
+        window.onload = function() { loadChart("NSE:NIFTY"); };
     </script>
 </body>
 </html>
+
