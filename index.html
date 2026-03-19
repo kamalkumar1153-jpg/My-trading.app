@@ -9,7 +9,7 @@
         body { background-color: var(--bg); color: white; font-family: sans-serif; margin: 0; padding: 0; text-align: center; }
         .header { padding: 15px; background: var(--card); color: var(--gold); font-size: 20px; font-weight: bold; border-bottom: 1px solid #30363d; }
         .ai-signals { display: flex; justify-content: center; gap: 10px; padding: 15px; flex-wrap: wrap; }
-        .signal-box { background: var(--card); padding: 12px; border-radius: 10px; border: 1px solid #30363d; min-width: 130px; }
+        .signal-box { background: var(--card); padding: 12px; border-radius: 10px; border: 1px solid #30363d; min-width: 140px; }
         .status { color: var(--green); font-weight: bold; animation: blink 1.5s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         .btn-group { margin: 10px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
@@ -24,19 +24,19 @@
 
     <div class="ai-signals">
         <div class="signal-box">
-            <div style="font-size: 11px; color: #8b949e;">NIFTY 50</div>
+            <div style="font-size: 11px; color: #8b949e;">NIFTY 50 (ETF)</div>
             <div class="status">STRONG BUY 🟢</div>
         </div>
         <div class="signal-box">
-            <div style="font-size: 11px; color: #8b949e;">SENSEX</div>
+            <div style="font-size: 11px; color: #8b949e;">SENSEX (ETF)</div>
             <div class="status">STRONG BUY 🟢</div>
         </div>
     </div>
 
     <div class="btn-group">
-        <button onclick="change('NIFTY')">🇮🇳 Nifty 50</button>
-        <button onclick="change('SENSEX')">🇮🇳 Sensex</button>
-        <button onclick="change('BTCUSDT')">₿ Bitcoin</button>
+        <button onclick="change('NSE:NIFBEES')">🇮🇳 Nifty 50</button>
+        <button onclick="change('BSE:SENSEXET')">🇮🇳 Sensex</button>
+        <button onclick="change('BINANCE:BTCUSDT')">₿ Bitcoin</button>
     </div>
 
     <div id="chart_area">
@@ -55,17 +55,19 @@
                 "style": "1",
                 "locale": "in",
                 "container_id": "tv_chart",
+                "hide_side_toolbar": false,
                 "allow_symbol_change": true,
-                "watchlist": ["NIFTY", "SENSEX", "BTCUSDT"]
+                "save_image": false
             });
         }
         function change(s) {
             document.getElementById("tv_chart").innerHTML = "";
             loadChart(s);
         }
-        window.onload = function() { loadChart("NIFTY"); };
+        window.onload = function() { loadChart("NSE:NIFBEES"); };
     </script>
 </body>
 </html>
+
 
 
