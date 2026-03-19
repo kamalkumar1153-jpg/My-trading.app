@@ -1,60 +1,78 @@
-import yfinance as yf
-import pandas_ta as ta
-import time
-
-def calculate_probability(symbol):
-    try:
-        # पिछले 2 दिनों का 5-मिनट डेटा (15 मिनट के ट्रेंड के लिए बेस्ट)
-        df = yf.download(symbol, period="2d", interval="5m", progress=False)
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kamal AI Pro Terminal</title>
+    <style>
+        :root { --bg: #0d1117; --card: #161b22; --gold: #f0b90b; --green: #0ecb81; --red: #ff4d4d; }
+        body { background-color: var(--bg); color: white; font-family: sans-serif; margin: 0; padding: 0; text-align: center; }
+        .header { padding: 15px; background: var(--card); color: var(--gold); font-size: 20px; font-weight: bold; border-bottom: 1px solid #30363d; }
         
-        if df.empty:
-            return "Data Error", 0
+        /* Signal Display Styling */
+        .pcr-box { margin: 15px; padding: 20px; background: var(--card); border-radius: 12px; border: 1px solid #30363d; }
+        .pcr-val { font-size: 32px; font-weight: bold; color: var(--gold); }
+        .signal-text { font-size: 18px; font-weight: bold; margin-top: 5px; }
+        .prob-text { font-size: 12px; color: #8b949e; margin-top: 8px; }
 
-        # इंडिकेटर्स जोड़ें
-        df['RSI'] = ta.rsi(df['Close'], length=14)
-        df['EMA_9'] = ta.ema(df['Close'], length=9)
-        df['EMA_21'] = ta.ema(df['Close'], length=21)
+        /* Option Data Container */
+        #option_chain_container { 
+            width: 95%; height: 500px; margin: 15px auto; 
+            border-radius: 12px; overflow: hidden; border: 1px solid #30363d; 
+        }
+    </style>
+</head>
+<body>
 
-        last_row = df.iloc[-1]
-        rsi = last_row['RSI']
-        ema9 = last_row['EMA_9']
-        ema21 = last_row['EMA_21']
-        close = last_row['Close']
+    <div class="header">🚀 KAMAL AI PRO TERMINAL</div>
 
-        prob = 50 # न्यूट्रल
+    <div class="pcr-box">
+        <div style="font-size: 12px; color: #8b949e; margin-bottom: 5px;">LIVE MARKET SENTIMENT (15m)</div>
+        <div id="pcr_display" class="pcr-val">--</div>
+        <div id="signal_display" class="signal-text">WAITING FOR DATA...</div>
+        <div id="prob_display" class="prob-text">Probability: --%</div>
+        <div id="update_time" style="font-size: 10px; color: #58a6ff; margin-top: 5px;">Last Update: --</div>
+    </div>
 
-        # UP Trend के लिए पॉइंट्स (+):
-        if rsi < 35: prob += 25       # Oversold (बाउंस आने के चांस)
-        if ema9 > ema21: prob += 15   # Bullish Crossover
-        if close > ema9: prob += 10   # Price Strength
+    <div id="option_chain_container">
+        <iframe src="https://www.google.com/finance/quote/NIFTY_50:INDEXNSE" style="width: 100%; height: 100%; border: none;"></iframe>
+    </div>
 
-        # DOWN Trend के लिए पॉइंट्स (-):
-        if rsi > 65: prob -= 25       # Overbought (गिरने के चांस)
-        if ema9 < ema21: prob -= 15   # Bearish Crossover
-        if close < ema9: prob -= 10   # Price Weakness
+    <script>
+        // 🚨 अपना असली Firebase URL यहाँ बदलें (अंत में .json ज़रूर लगाएँ)
+        const DB_URL = "https://your-project-id.firebaseio.com/market_data.json";
 
-        # सिग्नल तय करें
-        if prob >= 70: signal = "STRONG BUY 🟢"
-        elif prob > 55: signal = "BUY 📈"
-        elif prob <= 30: signal = "STRONG SELL 🔴"
-        elif prob < 45: signal = "SELL 📉"
-        else: signal = "WAITING... 🟡"
+        async function updateFromFirebase() {
+            try {
+                const response = await fetch(DB_URL);
+                const data = await response.json();
 
-        return signal, prob
+                if (data) {
+                    // डेटा को स्क्रीन पर दिखाना
+                    document.getElementById("pcr_display").innerText = "PCR: " + data.pcr;
+                    document.getElementById("prob_display").innerText = "Next 15m Probability: " + data.probability + "%";
+                    document.getElementById("update_time").innerText = "Last Update: " + data.last_update;
+                    
+                    let signal = document.getElementById("signal_display");
+                    signal.innerText = data.status;
 
-    except Exception as e:
-        return f"Error: {e}", 50
+                    // रंग बदलना (Logic)
+                    if(data.pcr > 1.2) signal.style.color = "#0ecb81"; // Bullish Green
+                    else if(data.pcr < 0.7) signal.style.color = "#ff4d4d"; // Bearish Red
+                    else signal.style.color = "#f0b90b"; // Neutral Gold
+                }
+            } catch (e) {
+                console.log("Firebase Error: Make sure URL is correct and Rules are public.");
+            }
+        }
 
-# लगातार चलाने के लिए लूप
-while True:
-    nifty_signal, nifty_prob = calculate_probability("^NSEI")
-    print(f"--- NIFTY 50 LIVE ---")
-    print(f"Signal: {nifty_signal}")
-    print(f"Probability: {nifty_prob}%")
-    print("-" * 20)
-    
-    # मार्केट की चाल धीमी होती है, इसलिए हर 5 मिनट में अपडेट करें
-    time.sleep(300) 
+        // हर 10 सेकंड में डेटा अपडेट चेक करें
+        setInterval(updateFromFirebase, 10000);
+        window.onload = updateFromFirebase;
+    </script>
+</body>
+</html>
+
             
 
 
