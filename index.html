@@ -34,9 +34,9 @@
     </div>
 
     <div class="btn-group">
-        <button onclick="change('ECONOMICS:NIFTY')">🇮🇳 Nifty 50</button>
-        <button onclick="change('ECONOMICS:SENSEX')">🇮🇳 Sensex</button>
-        <button onclick="change('BINANCE:BTCUSDT')">₿ Bitcoin</button>
+        <button onclick="change('NIFTY')">🇮🇳 Nifty 50</button>
+        <button onclick="change('SENSEX')">🇮🇳 Sensex</button>
+        <button onclick="change('BTCUSDT')">₿ Bitcoin</button>
     </div>
 
     <div id="chart_area">
@@ -55,16 +55,17 @@
                 "style": "1",
                 "locale": "in",
                 "container_id": "tv_chart",
-                "hide_side_toolbar": false,
-                "allow_symbol_change": true
+                "allow_symbol_change": true,
+                "watchlist": ["NIFTY", "SENSEX", "BTCUSDT"]
             });
         }
         function change(s) {
             document.getElementById("tv_chart").innerHTML = "";
             loadChart(s);
         }
-        window.onload = function() { loadChart("ECONOMICS:NIFTY"); };
+        window.onload = function() { loadChart("NIFTY"); };
     </script>
 </body>
 </html>
+
 
