@@ -7,16 +7,27 @@
     <style>
         :root { --bg: #0d1117; --card: #161b22; --gold: #f0b90b; --green: #0ecb81; }
         body { background-color: var(--bg); color: white; font-family: sans-serif; margin: 0; padding: 0; text-align: center; }
-        .header { padding: 15px; background: var(--card); color: var(--gold); font-size: 20px; font-weight: bold; border-bottom: 1px solid #30363d; }
+        .header { padding: 15px; background: var(--card); color: var(--gold); font-size: 22px; font-weight: bold; border-bottom: 1px solid #30363d; }
+        
         .ai-signals { display: flex; justify-content: center; gap: 10px; padding: 15px; flex-wrap: wrap; }
         .signal-box { background: var(--card); padding: 12px; border-radius: 10px; border: 1px solid #30363d; min-width: 140px; }
         .status { color: var(--green); font-weight: bold; animation: blink 1.5s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
         .btn-group { margin: 10px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
-        button { background: #21262d; color: white; border: 1px solid #30363d; padding: 10px 15px; cursor: pointer; border-radius: 8px; font-weight: bold; }
+        button { background: #21262d; color: white; border: 1px solid #30363d; padding: 12px 18px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 14px; }
         button:hover { background: var(--gold); color: black; }
-        /* चार्ट का एरिया सेट करना ज़रूरी है वरना वो नहीं दिखेगा */
-        #tv_chart_container { height: 500px; width: 95%; margin: 20px auto; border-radius: 12px; border: 1px solid #30363d; }
+
+        /* चार्ट कंटेनर की ऊँचाई सेट करना ज़रूरी है */
+        #tv_chart_container { 
+            height: 550px; 
+            width: 96%; 
+            margin: 15px auto; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            border: 1px solid #30363d; 
+            background: #131722;
+        }
     </style>
 </head>
 <body>
@@ -43,7 +54,9 @@
     <div id="tv_chart_container"></div>
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    
     <script type="text/javascript">
+        // चार्ट लोड करने का फंक्शन
         function loadChart(symbolName) {
             new TradingView.widget({
                 "autosize": true,
@@ -53,25 +66,30 @@
                 "theme": "dark",
                 "style": "1",
                 "locale": "in",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "allow_symbol_change": true,
                 "container_id": "tv_chart_container",
                 "hide_side_toolbar": false,
-                "allow_symbol_change": true,
                 "save_image": false
             });
         }
 
+        // बटन दबाने पर चार्ट बदलने का फंक्शन
         function change(s) {
             document.getElementById("tv_chart_container").innerHTML = "";
             loadChart(s);
         }
 
-        // वेबसाइट खुलते ही NiftyBees लोड होगा
+        // वेबसाइट खुलते ही सबसे पहले NiftyBees चार्ट लोड होगा
         window.onload = function() {
             loadChart("NSE:NIFTYBEES");
         };
     </script>
+
 </body>
 </html>
+
 
 
 
