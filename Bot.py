@@ -4,7 +4,7 @@ from nsepython import *
 
 # अपना Firebase URL यहाँ डालें
 FB_URL = "https://your-project-id.firebaseio.com/market_data.json"
-
+https://market--treminal-default-rtdb.firebaseio.com
 def run():
     try:
         data = nse_optionchain_scrapper('NIFTY')
