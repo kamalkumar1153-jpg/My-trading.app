@@ -24,7 +24,7 @@
 
     <div class="ai-signals">
         <div class="signal-box">
-            <div style="font-size: 11px; color: #8b949e;">NIFTY 50 (FUTURES)</div>
+            <div style="font-size: 11px; color: #8b949e;">NIFTY 50 (GIFT)</div>
             <div class="status">STRONG BUY 🟢</div>
         </div>
         <div class="signal-box">
@@ -34,7 +34,7 @@
     </div>
 
     <div class="btn-group">
-        <button onclick="change('NSE:NIFTY1!')">🇮🇳 Nifty 50</button>
+        <button onclick="change('SGX:GIFTNIFTY')">🇮🇳 Nifty 50</button>
         <button onclick="change('BSE:SENSEX')">🇮🇳 Sensex</button>
         <button onclick="change('BINANCE:BTCUSDT')">₿ Bitcoin</button>
     </div>
@@ -64,11 +64,12 @@
             document.getElementById("tv_chart").innerHTML = "";
             loadChart(s);
         }
-        // शुरुआत में निफ्टी फ्यूचर्स लोड होगा
-        window.onload = function() { loadChart("NSE:NIFTY1!"); };
+        // डिफ़ॉल्ट रूप से GIFTNIFTY लोड होगा
+        window.onload = function() { loadChart("SGX:GIFTNIFTY"); };
     </script>
 </body>
 </html>
+
 
 
 
