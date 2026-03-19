@@ -3,25 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kamal Trading Terminal</title>
+    <title>Kamal AI Terminal Pro</title>
     <style>
-        body { background-color: #0d1117; color: white; font-family: sans-serif; margin: 0; text-align: center; }
-        .header { padding: 15px; background: #161b22; color: #f0b90b; font-size: 20px; font-weight: bold; border-bottom: 1px solid #30363d; }
-        .btn-group { margin: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-        button { background: #238636; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 6px; font-weight: bold; }
-        button.sensex { background: #1f6feb; }
-        button.btc { background: #f0b90b; color: black; }
-        #chart_area { height: 75vh; width: 98%; margin: auto; border: 1px solid #30363d; border-radius: 10px; overflow: hidden; }
+        :root { --bg: #0d1117; --card: #161b22; --gold: #f0b90b; --green: #0ecb81; --red: #f6465d; }
+        body { background-color: var(--bg); color: white; font-family: sans-serif; margin: 0; text-align: center; }
+        
+        .header { padding: 15px; background: var(--card); color: var(--gold); font-size: 20px; font-weight: bold; border-bottom: 1px solid #30363d; }
+        
+        /* AI Signal Style */
+        .ai-signals { display: flex; justify-content: center; gap: 10px; padding: 15px; flex-wrap: wrap; }
+        .signal-box { background: var(--card); padding: 10px; border-radius: 10px; border: 1px solid #30363d; min-width: 140px; }
+        .buy-text { color: var(--green); font-weight: bold; animation: blink 1.5s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        .btn-group { margin-bottom: 15px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        button { background: #21262d; color: white; border: 1px solid #30363d; padding: 10px 15px; cursor: pointer; border-radius: 8px; font-weight: bold; }
+        button:hover { background: var(--gold); color: black; }
+
+        #chart_area { height: 65vh; width: 98%; margin: auto; border-radius: 12px; overflow: hidden; border: 1px solid #30363d; }
     </style>
 </head>
 <body>
 
-    <div class="header">💹 Kamal Market Terminal</div>
+    <div class="header">🚀 KAMAL AI PRO TERMINAL</div>
+
+    <div class="ai-signals">
+        <div class="signal-box">
+            <div>NIFTY 50</div>
+            <div class="buy-text">STRONG BUY 🟢</div>
+        </div>
+        <div class="signal-box">
+            <div>SENSEX</div>
+            <div class="buy-text">STRONG BUY 🟢</div>
+        </div>
+    </div>
 
     <div class="btn-group">
-        <button onclick="change('NSE:NIFTY')">🇮🇳 Nifty 50</button>
-        <button class="sensex" onclick="change('BSE:SENSEX')">🇮🇳 Sensex</button>
-        <button class="btc" onclick="change('BINANCE:BTCUSDT')">₿ Bitcoin</button>
+        <button onclick="changeSymbol('NSE:NIFTY')">🇮🇳 Nifty 50</button>
+        <button onclick="changeSymbol('BSE:SENSEX')">🇮🇳 Sensex</button>
+        <button onclick="changeSymbol('BINANCE:BTCUSDT')">₿ Bitcoin</button>
     </div>
 
     <div id="chart_area">
@@ -32,16 +52,30 @@
     <script type="text/javascript">
         function loadChart(symbol) {
             new TradingView.widget({
-                "autosize": true, "symbol": symbol, "interval": "15",
-                "timezone": "Asia/Kolkata", "theme": "dark", "style": "1",
-                "locale": "in", "container_id": "tv_chart"
+                "autosize": true,
+                "symbol": symbol,
+                "interval": "D", 
+                "timezone": "Asia/Kolkata",
+                "theme": "dark",
+                "style": "1",
+                "locale": "in",
+                "container_id": "tv_chart",
+                "hide_side_toolbar": false,
+                "allow_symbol_change": true,
+                "details": true,
+                "hotlist": true,
+                "calendar": true
             });
         }
-        function change(s) {
+
+        function changeSymbol(s) {
             document.getElementById("tv_chart").innerHTML = "";
             loadChart(s);
         }
-        window.onload = function() { loadChart("NSE:NIFTY"); };
+
+        window.onload = function() {
+            loadChart("NSE:NIFTY");
+        };
     </script>
 </body>
 </html>
