@@ -32,20 +32,20 @@
             <div class="status">STRONG BUY 🟢</div>
         </div>
     </div>
+<div class="btn-group">
+    <button onclick="change('NSE:NIFTYBEES')">🇮🇳 Nifty 50</button>
+    <button onclick="change('BSE:SENSEX')">🇮🇳 Sensex</button>
+    <button onclick="change('BINANCE:BTCUSDT')">₿ Bitcoin</button>
+</div>
 
-    <div class="btn-group">
-        // इसे अपनी index.html में बदलें
-<button onclick="change('NSE:NIFBEES')">🇮🇳 Nifty 50</button>
-
-// और नीचे यहाँ भी:
-window.onload = function() { loadChart("NSE:NIFBEES')">
-        <button onclick="change('BSE:SENSEX')">🇮🇳 Sensex</button>
-        <button onclick="change('BINANCE:BTCUSDT')">₿ Bitcoin</button>
-    </div>
-
-    <div id="chart_area">
-        <div id="tv_chart"></div>
-    </div>
+<script>
+    // डिफ़ॉल्ट लोडिंग के लिए भी CAPITAL LETTERS का ही इस्तेमाल करें
+    window.onload = function() { 
+        loadChart("NSE:NIFTYBEES"); 
+    };
+</script>
+    
+    
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script type="text/javascript">
