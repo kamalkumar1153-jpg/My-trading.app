@@ -1,2 +1,2 @@
-nsepython
-requests
+yfinance
+pandas_ta
