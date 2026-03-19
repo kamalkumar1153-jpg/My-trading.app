@@ -1,56 +1,61 @@
-<!DOCTYPE html>
-<html lang="hi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kamal AI Intraday Terminal</title>
-    <style>
-        :root { --bg: #0d1117; --card: #161b22; --gold: #f0b90b; --green: #0ecb81; }
-        body { background-color: var(--bg); color: white; font-family: sans-serif; margin: 0; padding: 0; text-align: center; }
-        .header { padding: 15px; background: var(--card); color: var(--gold); font-size: 20px; font-weight: bold; border-bottom: 1px solid #30363d; }
-        .btn-group { margin: 15px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
-        button { background: #21262d; color: white; border: 1px solid #30363d; padding: 12px 18px; cursor: pointer; border-radius: 8px; font-weight: bold; }
-        button:hover { background: var(--gold); color: black; }
-        #tv_chart_container { height: 550px; width: 96%; margin: auto; border-radius: 12px; border: 1px solid #30363d; overflow: hidden; background: #131722; }
-    </style>
-</head>
-<body>
+import yfinance as yf
+import pandas_ta as ta
+import time
 
-    <div class="header">🚀 KAMAL AI INTRADAY TERMINAL</div>
+def calculate_probability(symbol):
+    try:
+        # पिछले 2 दिनों का 5-मिनट डेटा (15 मिनट के ट्रेंड के लिए बेस्ट)
+        df = yf.download(symbol, period="2d", interval="5m", progress=False)
+        
+        if df.empty:
+            return "Data Error", 0
 
-    <div class="btn-group">
-        <button onclick="change('NSE:IN1!')">🇮🇳 GIFT Nifty</button>
-        <button onclick="change('BSE:SENSEX')">🇮🇳 Sensex</button>
-        <button onclick="change('NSE:RELIANCE')">🇮🇳 Reliance</button>
-    </div>
+        # इंडिकेटर्स जोड़ें
+        df['RSI'] = ta.rsi(df['Close'], length=14)
+        df['EMA_9'] = ta.ema(df['Close'], length=9)
+        df['EMA_21'] = ta.ema(df['Close'], length=21)
 
-    <div id="tv_chart_container"></div>
+        last_row = df.iloc[-1]
+        rsi = last_row['RSI']
+        ema9 = last_row['EMA_9']
+        ema21 = last_row['EMA_21']
+        close = last_row['Close']
 
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <script type="text/javascript">
-        function loadChart(symbol) {
-            new TradingView.widget({
-                "autosize": true,
-                "symbol": symbol,
-                "interval": "5", // 5 मिनट इंट्राडे के लिए
-                "timezone": "Asia/Kolkata",
-                "theme": "dark",
-                "style": "1",
-                "locale": "in",
-                "container_id": "tv_chart_container",
-                "allow_symbol_change": true,
-                "hide_side_toolbar": false
-            });
-        }
-        function change(s) {
-            document.getElementById("tv_chart_container").innerHTML = "";
-            loadChart(s);
-        }
-        // शुरुआत में GIFT Nifty लोड होगा
-        window.onload = function() { loadChart("NSE:IN1!"); };
-    </script>
-</body>
-</html>
+        prob = 50 # न्यूट्रल
+
+        # UP Trend के लिए पॉइंट्स (+):
+        if rsi < 35: prob += 25       # Oversold (बाउंस आने के चांस)
+        if ema9 > ema21: prob += 15   # Bullish Crossover
+        if close > ema9: prob += 10   # Price Strength
+
+        # DOWN Trend के लिए पॉइंट्स (-):
+        if rsi > 65: prob -= 25       # Overbought (गिरने के चांस)
+        if ema9 < ema21: prob -= 15   # Bearish Crossover
+        if close < ema9: prob -= 10   # Price Weakness
+
+        # सिग्नल तय करें
+        if prob >= 70: signal = "STRONG BUY 🟢"
+        elif prob > 55: signal = "BUY 📈"
+        elif prob <= 30: signal = "STRONG SELL 🔴"
+        elif prob < 45: signal = "SELL 📉"
+        else: signal = "WAITING... 🟡"
+
+        return signal, prob
+
+    except Exception as e:
+        return f"Error: {e}", 50
+
+# लगातार चलाने के लिए लूप
+while True:
+    nifty_signal, nifty_prob = calculate_probability("^NSEI")
+    print(f"--- NIFTY 50 LIVE ---")
+    print(f"Signal: {nifty_signal}")
+    print(f"Probability: {nifty_prob}%")
+    print("-" * 20)
+    
+    # मार्केट की चाल धीमी होती है, इसलिए हर 5 मिनट में अपडेट करें
+    time.sleep(300) 
+            
 
 
 
