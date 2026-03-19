@@ -3,77 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kamal AI Pro Terminal</title>
+    <title>Kamal AI Terminal</title>
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --gold: #f0b90b; --green: #0ecb81; --red: #ff4d4d; }
-        body { background-color: var(--bg); color: white; font-family: sans-serif; margin: 0; padding: 0; text-align: center; }
-        .header { padding: 15px; background: var(--card); color: var(--gold); font-size: 20px; font-weight: bold; border-bottom: 1px solid #30363d; }
-        
-        /* Signal Display Styling */
-        .pcr-box { margin: 15px; padding: 20px; background: var(--card); border-radius: 12px; border: 1px solid #30363d; }
-        .pcr-val { font-size: 32px; font-weight: bold; color: var(--gold); }
-        .signal-text { font-size: 18px; font-weight: bold; margin-top: 5px; }
-        .prob-text { font-size: 12px; color: #8b949e; margin-top: 8px; }
-
-        /* Option Data Container */
-        #option_chain_container { 
-            width: 95%; height: 500px; margin: 15px auto; 
-            border-radius: 12px; overflow: hidden; border: 1px solid #30363d; 
-        }
+        body { background: #0d1117; color: white; font-family: sans-serif; text-align: center; }
+        .box { margin: 20px; padding: 20px; background: #161b22; border-radius: 12px; border: 1px solid #30363d; }
+        .pcr { font-size: 30px; color: #f0b90b; font-weight: bold; }
+        iframe { width: 95%; height: 500px; border-radius: 10px; border: none; margin-top: 15px; }
     </style>
 </head>
 <body>
-
-    <div class="header">🚀 KAMAL AI PRO TERMINAL</div>
-
-    <div class="pcr-box">
-        <div style="font-size: 12px; color: #8b949e; margin-bottom: 5px;">LIVE MARKET SENTIMENT (15m)</div>
-        <div id="pcr_display" class="pcr-val">--</div>
-        <div id="signal_display" class="signal-text">WAITING FOR DATA...</div>
-        <div id="prob_display" class="prob-text">Probability: --%</div>
-        <div id="update_time" style="font-size: 10px; color: #58a6ff; margin-top: 5px;">Last Update: --</div>
+    <h2 style="color: #f0b90b;">🚀 KAMAL AI TERMINAL</h2>
+    <div class="box">
+        <div id="pcr_val" class="pcr">PCR: --</div>
+        <div id="signal" style="font-size: 18px; margin-top: 5px;">WAITING...</div>
     </div>
-
-    <div id="option_chain_container">
-        <iframe src="https://www.google.com/finance/quote/NIFTY_50:INDEXNSE" style="width: 100%; height: 100%; border: none;"></iframe>
-    </div>
+    <iframe src="https://www.google.com/finance/quote/NIFTY_50:INDEXNSE"></iframe>
 
     <script>
-        // 🚨 अपना असली Firebase URL यहाँ बदलें (अंत में .json ज़रूर लगाएँ)
-       const DB_URL = "https://आपका-लिंक-यहाँ-पेस्ट-करें/market_data.json";
-        https://market--treminal-default-rtdb.firebaseio.com
-        
-
-        async function updateFromFirebase() {
+        // अपना Firebase URL यहाँ डालें
+        const URL = "https://your-project-id.firebaseio.com/market_data.json";
+        async function update() {
             try {
-                const response = await fetch(DB_URL);
-                const data = await response.json();
-
-                if (data) {
-                    // डेटा को स्क्रीन पर दिखाना
-                    document.getElementById("pcr_display").innerText = "PCR: " + data.pcr;
-                    document.getElementById("prob_display").innerText = "Next 15m Probability: " + data.probability + "%";
-                    document.getElementById("update_time").innerText = "Last Update: " + data.last_update;
-                    
-                    let signal = document.getElementById("signal_display");
-                    signal.innerText = data.status;
-
-                    // रंग बदलना (Logic)
-                    if(data.pcr > 1.2) signal.style.color = "#0ecb81"; // Bullish Green
-                    else if(data.pcr < 0.7) signal.style.color = "#ff4d4d"; // Bearish Red
-                    else signal.style.color = "#f0b90b"; // Neutral Gold
+                const res = await fetch(URL);
+                const data = await res.json();
+                if(data) {
+                    document.getElementById("pcr_val").innerText = "PCR: " + data.pcr;
+                    document.getElementById("signal").innerText = data.status;
                 }
-            } catch (e) {
-                console.log("Firebase Error: Make sure URL is correct and Rules are public.");
-            }
+            } catch(e) {}
         }
-
-        // हर 10 सेकंड में डेटा अपडेट चेक करें
-        setInterval(updateFromFirebase, 10000);
-        window.onload = updateFromFirebase;
+        setInterval(update, 10000);
+        update();
     </script>
 </body>
 </html>
+
 
             
 
