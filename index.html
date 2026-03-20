@@ -3,52 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Market Dashboard</title>
+    <title>AI Market Terminal</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background-color: #0d1117; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 10px; }
-        .chart-box { height: 450px; margin-bottom: 25px; border: 1px solid #30363d; border-radius: 8px; }
-        h2 { color: #58a6ff; text-align: left; padding-left: 10px; font-size: 18px; }
+        body { background-color: #0d1117; color: #c9d1d9; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; }
+        .price-card { background: #161b22; padding: 20px; border-radius: 12px; border: 1px solid #30363d; margin-bottom: 20px; }
+        .price { font-size: 32px; font-weight: bold; color: #238636; margin: 10px 0; }
+        canvas { background: #161b22; border-radius: 8px; padding: 10px; border: 1px solid #30363d; }
+        .label { color: #8b949e; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <h1>🚀 AI Auto Signal Terminal</h1>
+    <div class="container">
+        <h1>Market Terminal Live</h1>
+        
+        <div class="price-card">
+            <div class="label">NIFTY 50 (LIVE)</div>
+            <div id="niftyPrice" class="price">Loading...</div>
+            <canvas id="niftyChart"></canvas>
+        </div>
 
-    <h2>NIFTY 50 (5 min + 20 EMA + RSI)</h2>
-    <div class="chart-box" id="nifty"></div>
+        <div class="price-card">
+            <div class="label">SENSEX (LIVE)</div>
+            <div id="sensexPrice" class="price">Loading...</div>
+            <canvas id="sensexChart"></canvas>
+        </div>
+    </div>
 
-    <h2>SENSEX (5 min + 20 EMA + RSI)</h2>
-    <div class="chart-box" id="sensex"></div>
+    <script>
+        const API_KEY = '116ae9781b96425181ecce7d513022bc';
 
-    <h2>BANK NIFTY (5 min + 20 EMA + RSI)</h2>
-    <div class="chart-box" id="banknifty"></div>
+        async function updateMarketData(symbol, elementId, chartId) {
+            try {
+                // Real-time price fetch
+                const res = await fetch(`https://api.twelvedata.com/price?symbol=${symbol}&apikey=${API_KEY}`);
+                const data = await res.json();
+                document.getElementById(elementId).innerText = "₹ " + parseFloat(data.price).toLocaleString();
 
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <script type="text/javascript">
-        function createChart(container, symbol) {
-            new TradingView.widget({
-                "autosize": true,
-                "symbol": symbol,
-                "interval": "5",
-                "timezone": "Asia/Kolkata",
-                "theme": "dark",
-                "style": "1",
-                "locale": "in",
-                "container_id": container,
-                "studies": [
-                    { "id": "MASimple@tv-basicstudies", "inputs": { "length": 20 } },
-                    { "id": "RSI@tv-basicstudies", "inputs": { "length": 14 } }
-                ]
+                // Time-series data for chart (Last 24 hours)
+                const chartRes = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1h&outputsize=24&apikey=${API_KEY}`);
+                const chartData = await chartRes.json();
+                
+                const prices = chartData.values.map(item => parseFloat(item.close)).reverse();
+                const labels = chartData.values.map(item => item.datetime.split(' ')[1].substring(0,5)).reverse();
+
+                renderChart(chartId, labels, prices);
+            } catch (err) {
+                console.log("Error:", err);
+            }
+        }
+
+        function renderChart(id, labels, data) {
+            const ctx = document.getElementById(id).getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Price',
+                        data: data,
+                        borderColor: '#58a6ff',
+                        backgroundColor: 'rgba(88, 166, 255, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: true, grid: { display: false } },
+                        y: { display: true, grid: { color: '#30363d' } }
+                    }
+                }
             });
         }
 
-        // Charts Load Karein
-        createChart("nifty", "NSE:NIFTY");
-        createChart("sensex", "BSE:SENSEX");
-        createChart("banknifty", "NSE:BANKNIFTY");
+        // Symbols for Twelve Data
+        updateMarketData('NIFTY', 'niftyPrice', 'niftyChart');
+        updateMarketData('SENSEX', 'sensexPrice', 'sensexChart');
+        
+        // Refresh data every 1 minute
+        setInterval(() => {
+            updateMarketData('NIFTY', 'niftyPrice', 'niftyChart');
+            updateMarketData('SENSEX', 'sensexPrice', 'sensexChart');
+        }, 60000);
     </script>
 </body>
 </html>
+
 
 
 
