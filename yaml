@@ -1,26 +1,25 @@
-name: Market AI Signal Bot
-
+name: Market Auto Signal
 on:
   schedule:
-    # Yeh her 10 minute mein chalega (Market hours ke hisaab se)
-    - cron: '*/10 * * * *'
-  workflow_dispatch: # Button daba kar manual start karne ke liye
+    - cron: '*/10 * * * *' # Har 10 min mein scan karega
+  workflow_dispatch: # Manual button se bhi chala sakte hain
 
 jobs:
-  run-ai:
+  run-bot:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Python
+        uses: actions/setup-python@v2
         with:
-          python-version: '3.10'
-
+          python-version: '3.9'
       - name: Install Libraries
-        run: pip install yfinance pandas
-
-      - name: Execute AI Script
-        run: python market_ai.py
+        run: pip install yfinance pandas-ta requests
+      - name: Execute Script
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+        run: python bot.py
+        
         
