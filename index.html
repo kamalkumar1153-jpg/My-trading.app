@@ -1,42 +1,85 @@
-    // Nifty 50 Chart with 20 EMA
-    new TradingView.widget({
-        "autosize": true,
-        "symbol": "NSE:NIFTY",
-        "interval": "5", // 5 minute timeframe
-        "timezone": "Asia/Kolkata",
-        "theme": "dark",
-        "style": "1",
-        "locale": "in",
-        "container_id": "tradingview_nifty",
-        "studies": [
-            {
-                "id": "MASimple@tv-basicstudies",
-                "inputs": {
-                    "length": 20
-                }
-            }
-        ]
-    });
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Auto Signal Dashboard</title>
+    <style>
+        /* CSS yahan shuru hoti hai */
+        body {
+            background-color: #0d1117;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+        .chart-box {
+            height: 500px;
+            margin-bottom: 30px;
+            border: 2px solid #30363d;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        h1 { color: #58a6ff; }
+        h2 { text-align: left; margin-left: 10px; font-size: 18px; color: #8b949e; }
+    </style>
+</head>
+<body>
 
-    // Sensex Chart with 20 EMA
-    new TradingView.widget({
-        "autosize": true,
-        "symbol": "BSE:SENSEX",
-        "interval": "5",
-        "timezone": "Asia/Kolkata",
-        "theme": "dark",
-        "style": "1",
-        "locale": "in",
-        "container_id": "tradingview_sensex",
-        "studies": [
-            {
-                "id": "MASimple@tv-basicstudies",
-                "inputs": {
-                    "length": 20
-                }
-            }
-        ]
-    });
+    <div class="container">
+        <h1>Nifty & Sensex AI Dashboard</h1>
+        
+        <h2>NIFTY 50 (20 EMA + RSI)</h2>
+        <div class="chart-box" id="nifty_chart"></div>
+
+        <h2>SENSEX (20 EMA + RSI)</h2>
+        <div class="chart-box" id="sensex_chart"></div>
+    </div>
+
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+
+    <script type="text/javascript">
+        // Nifty Widget Logic
+        new TradingView.widget({
+            "autosize": true,
+            "symbol": "NSE:NIFTY",
+            "interval": "5",
+            "timezone": "Asia/Kolkata",
+            "theme": "dark",
+            "style": "1",
+            "locale": "in",
+            "container_id": "nifty_chart",
+            "studies": [
+                { "id": "MASimple@tv-basicstudies", "inputs": { "length": 20 } },
+                { "id": "RSI@tv-basicstudies", "inputs": { "length": 14 } }
+            ]
+        });
+
+        // Sensex Widget Logic
+        new TradingView.widget({
+            "autosize": true,
+            "symbol": "BSE:SENSEX",
+            "interval": "5",
+            "timezone": "Asia/Kolkata",
+            "theme": "dark",
+            "style": "1",
+            "locale": "in",
+            "container_id": "sensex_chart",
+            "studies": [
+                { "id": "MASimple@tv-basicstudies", "inputs": { "length": 20 } },
+                { "id": "RSI@tv-basicstudies", "inputs": { "length": 14 } }
+            ]
+        });
+    </script>
+
+</body>
+</html>
+
 
 
 
