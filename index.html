@@ -3,90 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chart Terminal</title>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <title>Market AI Chart Pro</title>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        body { background: #0d1117; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 10px; }
-        .card { background: #161b22; padding: 20px; border-radius: 12px; border: 1px solid #30363d; margin: 10px auto; max-width: 900px; }
-        .price { font-size: 32px; font-weight: bold; color: #238636; margin-bottom: 10px; }
-        .btn { background: #21262d; color: #58a6ff; border: 1px solid #30363d; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 15px 0; }
-        #chart-nifty { min-height: 450px; width: 100%; margin-top: 10px; }
-        .status { font-size: 13px; color: #8b949e; }
+        body { background: #0d1117; color: white; font-family: sans-serif; margin: 0; padding: 10px; text-align: center; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 15px; margin: 10px auto; max-width: 900px; }
+        #chart-container { height: 400px; width: 100%; margin-top: 15px; }
+        .price { font-size: 32px; font-weight: bold; color: #238636; margin: 10px 0; }
+        .btn { background: #21262d; color: #58a6ff; border: 1px solid #30363d; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .status { font-size: 12px; color: #8b949e; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
     <h1>🚀 Market AI Terminal</h1>
-    <button class="btn" onclick="loadChartData()">📊 Load / Refresh Chart</button>
-    <div id="status-msg" class="status">System Ready. Click Load.</div>
+    <div class="status" id="api-msg">Ready to Load Data</div>
+    <button class="btn" onclick="fetchStockData()">📊 Load Nifty Chart</button>
 
     <div class="card">
-        <h3>NIFTY 50 (NSE)</h3>
-        <div id="nifty-val" class="price">₹ 0.00</div>
-        <div id="chart-nifty"></div>
+        <h3>NIFTY 50 (5 Min Chart)</h3>
+        <div id="nifty-price" class="price">₹ --</div>
+        <div id="chart-container"></div>
     </div>
 
     <script>
         const API_KEY = 'X9RBP7WIUXD6XO3C';
+        let chart, candlestickSeries;
 
-        async function loadChartData() {
-            const status = document.getElementById('status-msg');
-            status.innerText = "🔄 Connecting to Alpha Vantage...";
+        // Initialize Chart
+        function initChart() {
+            const container = document.getElementById('chart-container');
+            chart = LightweightCharts.createChart(container, {
+                width: container.clientWidth,
+                height: 400,
+                layout: { backgroundColor: '#161b22', textColor: '#d1d4dc' },
+                grid: { vertLines: { color: '#30363d' }, horzLines: { color: '#30363d' } },
+                crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+                priceScale: { borderColor: '#30363d' },
+                timeScale: { borderColor: '#30363d', timeVisible: true, secondsVisible: false }
+            });
+            candlestickSeries = chart.addCandlestickSeries({
+                upColor: '#26a69a', downColor: '#ef5350', borderVisible: false,
+                wickUpColor: '#26a69a', wickDownColor: '#ef5350'
+            });
+        }
+
+        async function fetchStockData() {
+            const msg = document.getElementById('api-msg');
+            msg.innerText = "Connecting to API...";
             
             try {
-                // Nifty data fetch logic
                 const url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=NSE:NIFTY&interval=5min&apikey=${API_KEY}`;
-                const response = await fetch(url);
-                const data = await response.json();
+                const res = await fetch(url);
+                const data = await res.json();
 
                 if (data["Note"]) {
-                    status.innerText = "⚠️ API Limit Reached! Wait 60 seconds.";
+                    msg.innerText = "❌ API Limit Reached! Wait 1 minute.";
                     return;
                 }
 
-                const series = data["Time Series (5min)"];
-                if (series) {
-                    const keys = Object.keys(series).reverse();
-                    const candleData = keys.map(time => ({
-                        x: new Date(time),
-                        y: [
-                            parseFloat(series[time]["1. open"]),
-                            parseFloat(series[time]["2. high"]),
-                            parseFloat(series[time]["3. low"]),
-                            parseFloat(series[time]["4. close"])
-                        ]
-                    }));
+                const timeSeries = data["Time Series (5min)"];
+                if (timeSeries) {
+                    const formattedData = Object.keys(timeSeries).map(time => ({
+                        time: new Date(time).getTime() / 1000,
+                        open: parseFloat(timeSeries[time]["1. open"]),
+                        high: parseFloat(timeSeries[time]["2. high"]),
+                        low: parseFloat(timeSeries[time]["3. low"]),
+                        close: parseFloat(timeSeries[time]["4. close"])
+                    })).sort((a, b) => a.time - b.time);
 
-                    const currentPrice = candleData[candleData.length - 1].y[3];
-                    document.getElementById('nifty-val').innerText = "₹ " + currentPrice.toLocaleString('en-IN');
-                    
-                    renderChart(candleData);
-                    status.innerText = "✅ Chart Updated at " + new Date().toLocaleTimeString();
+                    if (!chart) initChart();
+                    candlestickSeries.setData(formattedData);
+                    document.getElementById('nifty-price').innerText = "₹ " + formattedData[formattedData.length-1].close.toLocaleString('en-IN');
+                    msg.innerText = "✅ Chart Updated: " + new Date().toLocaleTimeString();
                 } else {
-                    status.innerText = "❌ No Data Found. Market might be closed.";
+                    msg.innerText = "⚠️ Market Data Not Found (Check Symbol)";
                 }
-            } catch (err) {
-                status.innerText = "📡 Network Error. Try again.";
+            } catch (e) {
+                msg.innerText = "📡 Network Error. Check Internet.";
             }
         }
 
-        function renderChart(candles) {
-            const options = {
-                series: [{ name: 'Price', data: candles }],
-                chart: { type: 'candlestick', height: 400, background: 'transparent', toolbar: { show: false } },
-                xaxis: { type: 'datetime', labels: { style: { colors: '#8b949e' } } },
-                yaxis: { labels: { style: { colors: '#8b949e' } } },
-                theme: { mode: 'dark' },
-                plotOptions: { candlestick: { colors: { upward: '#238636', downward: '#da3633' } } }
-            };
-
-            const chartArea = document.querySelector("#chart-nifty");
-            chartArea.innerHTML = ""; // Clear old chart
-            new ApexCharts(chartArea, options).render();
-        }
+        // Handle resizing
+        window.addEventListener('resize', () => {
+            if (chart) chart.resize(document.getElementById('chart-container').clientWidth, 400);
+        });
     </script>
 </body>
 </html>
+
 
 
         
