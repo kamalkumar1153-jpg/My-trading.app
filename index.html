@@ -3,97 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Market Terminal</title>
+    <title>AI Market Terminal - Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background-color: #0d1117; color: #c9d1d9; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: auto; }
-        .price-card { background: #161b22; padding: 20px; border-radius: 12px; border: 1px solid #30363d; margin-bottom: 20px; }
-        .price { font-size: 32px; font-weight: bold; color: #238636; margin: 10px 0; }
-        canvas { background: #161b22; border-radius: 8px; padding: 10px; border: 1px solid #30363d; }
-        .label { color: #8b949e; font-size: 14px; }
+        body { background-color: #0d1117; color: #c9d1d9; font-family: sans-serif; text-align: center; margin: 0; padding: 15px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; max-width: 1200px; margin: auto; }
+        .card { background: #161b22; padding: 15px; border-radius: 12px; border: 1px solid #30363d; }
+        .price { font-size: 28px; font-weight: bold; color: #238636; margin: 5px 0; }
+        .label { color: #8b949e; font-size: 14px; text-transform: uppercase; }
+        canvas { margin-top: 10px; max-height: 200px; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Market Terminal Live</h1>
-        
-        <div class="price-card">
-            <div class="label">NIFTY 50 (LIVE)</div>
+    <h1>🚀 Market AI Terminal</h1>
+    
+    <div class="grid">
+        <div class="card">
+            <div class="label">Nifty 50</div>
             <div id="niftyPrice" class="price">Loading...</div>
             <canvas id="niftyChart"></canvas>
         </div>
 
-        <div class="price-card">
-            <div class="label">SENSEX (LIVE)</div>
+        <div class="card">
+            <div class="label">Sensex</div>
             <div id="sensexPrice" class="price">Loading...</div>
             <canvas id="sensexChart"></canvas>
+        </div>
+
+        <div class="card">
+            <div class="label">Bank Nifty</div>
+            <div id="bankPrice" class="price">Loading...</div>
+            <canvas id="bankChart"></canvas>
         </div>
     </div>
 
     <script>
         const API_KEY = '116ae9781b96425181ecce7d513022bc';
 
-        async function updateMarketData(symbol, elementId, chartId) {
+        async function getData(symbol, priceId, chartId) {
             try {
-                // Real-time price fetch
-                const res = await fetch(`https://api.twelvedata.com/price?symbol=${symbol}&apikey=${API_KEY}`);
-                const data = await res.json();
-                document.getElementById(elementId).innerText = "₹ " + parseFloat(data.price).toLocaleString();
-
-                // Time-series data for chart (Last 24 hours)
-                const chartRes = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1h&outputsize=24&apikey=${API_KEY}`);
-                const chartData = await chartRes.json();
+                // Price Fetch
+                const pRes = await fetch(`https://api.twelvedata.com/price?symbol=${symbol}&apikey=${API_KEY}`);
+                const pData = await pRes.json();
                 
-                const prices = chartData.values.map(item => parseFloat(item.close)).reverse();
-                const labels = chartData.values.map(item => item.datetime.split(' ')[1].substring(0,5)).reverse();
+                if(pData.price) {
+                    document.getElementById(priceId).innerText = "₹ " + parseFloat(pData.price).toLocaleString('en-IN');
+                } else {
+                    document.getElementById(priceId).innerText = "Closed/Error";
+                }
 
-                renderChart(chartId, labels, prices);
-            } catch (err) {
-                console.log("Error:", err);
-            }
+                // Chart Data Fetch
+                const cRes = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1h&outputsize=12&apikey=${API_KEY}`);
+                const cData = await cRes.json();
+
+                if(cData.values) {
+                    const prices = cData.values.map(v => parseFloat(v.close)).reverse();
+                    const labels = cData.values.map(v => v.datetime.split(' ')[1].substring(0,5)).reverse();
+                    drawChart(chartId, labels, prices);
+                }
+            } catch (e) { console.error(e); }
         }
 
-        function renderChart(id, labels, data) {
+        function drawChart(id, labels, data) {
             const ctx = document.getElementById(id).getContext('2d');
             new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Price',
                         data: data,
                         borderColor: '#58a6ff',
-                        backgroundColor: 'rgba(88, 166, 255, 0.1)',
-                        fill: true,
-                        tension: 0.3,
-                        borderWidth: 2
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 0
                     }]
                 },
                 options: {
-                    responsive: true,
                     plugins: { legend: { display: false } },
-                    scales: {
-                        x: { display: true, grid: { display: false } },
-                        y: { display: true, grid: { color: '#30363d' } }
-                    }
+                    scales: { x: { display: false }, y: { grid: { color: '#30363d' } } }
                 }
             });
         }
 
-        // Symbols for Twelve Data
-        updateMarketData('NIFTY', 'niftyPrice', 'niftyChart');
-        updateMarketData('SENSEX', 'sensexPrice', 'sensexChart');
-        
-        // Refresh data every 1 minute
-        setInterval(() => {
-            updateMarketData('NIFTY', 'niftyPrice', 'niftyChart');
-            updateMarketData('SENSEX', 'sensexPrice', 'sensexChart');
-        }, 60000);
+        // Twelve Data ke liye correct symbols
+        function refreshAll() {
+            getData('NIFTY', 'niftyPrice', 'niftyChart');
+            getData('SENSEX', 'sensexPrice', 'sensexChart');
+            getData('BANKNIFTY', 'bankPrice', 'bankChart');
+        }
+
+        refreshAll();
+        // Har 2 minute mein update (API limit bachane ke liye)
+        setInterval(refreshAll, 120000);
     </script>
 </body>
 </html>
+
 
 
 
