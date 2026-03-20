@@ -9,11 +9,12 @@
         :root { --bg: #0d1117; --card: #161b22; --text: white; --border: #30363d; --accent: #58a6ff; }
         .light-mode { --bg: #f6f8fa; --card: #ffffff; --text: #24292f; --border: #d0d7de; }
         body { background-color: var(--bg); color: var(--text); font-family: sans-serif; text-align: center; margin: 0; padding-bottom: 60px; transition: 0.3s; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; padding: 15px; max-width: 1200px; margin: auto; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; padding: 10px; max-width: 1200px; margin: auto; }
         .card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
-        .price-text { font-size: 30px; font-weight: bold; color: #238636; margin: 10px 0; }
+        .price-text { font-size: 28px; font-weight: bold; color: #238636; margin: 10px 0; }
         .btn-group { margin: 15px 0; display: flex; justify-content: center; gap: 10px; }
-        .btn { padding: 10px 20px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--accent); cursor: pointer; font-weight: bold; }
+        .btn { padding: 10px 15px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--accent); cursor: pointer; font-weight: bold; font-size: 14px; }
+        .status { font-size: 12px; color: #8b949e; margin-bottom: 10px; }
         .ticker-wrap { position: fixed; bottom: 0; width: 100%; background: var(--card); border-top: 1px solid var(--border); overflow: hidden; height: 35px; z-index: 1000; }
         .ticker { white-space: nowrap; display: inline-block; animation: scroll 35s linear infinite; line-height: 35px; color: var(--accent); font-weight: bold; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
@@ -28,27 +29,27 @@
         <button class="btn" onclick="toggleTheme()">🌓 Switch Mode</button>
     </div>
     
-    <p id="api-status" style="font-size: 12px; color: #8b949e;">System Live with API Key</p>
+    <div id="api-status" class="status">Connecting to Market Data...</div>
 
     <div class="grid">
         <div class="card">
             <h3>NIFTY 50</h3>
-            <div id="nifty-price" class="price-text">₹ 0.00</div>
+            <div id="nifty-price" class="price-text">Loading...</div>
             <div id="chart-nifty"></div>
         </div>
         <div class="card">
             <h3>SENSEX</h3>
-            <div id="sensex-price" class="price-text">₹ 0.00</div>
+            <div id="sensex-price" class="price-text">Loading...</div>
             <div id="chart-sensex"></div>
         </div>
     </div>
 
     <div class="ticker-wrap">
-        <div class="ticker">📊 AI Signal Active: 🟢 BUY Above 20 EMA | 🔴 SELL Below 20 EMA | Monitoring Nifty & Sensex</div>
+        <div class="ticker">📊 AI Signal Active: 🟢 BUY Above 20 EMA | 🔴 SELL Below 20 EMA | Real-time Analysis Engaged</div>
     </div>
 
     <script>
-        const ALPHA_KEY = 'X9RBP7WIUXD6XO3C'; // Aapki active key
+        const ALPHA_KEY = 'X9RBP7WIUXD6XO3C'; 
         let currentTheme = 'dark';
 
         function toggleTheme() {
@@ -66,16 +67,19 @@
             return emaArray;
         }
 
-        async function fetchMarketData(priceId, chartId, alphaSymbol) {
+        async function fetchMarketData(priceId, chartId, symbol) {
             try {
-                const res = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${alphaSymbol}&interval=5min&apikey=${ALPHA_KEY}`);
-                const data = await res.json();
+                // Time series fetch
+                const url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=5min&apikey=${ALPHA_KEY}`;
+                const response = await fetch(url);
+                const data = await response.json();
 
-                if (data["Time Series (5min)"]) {
-                    const times = Object.keys(data["Time Series (5min)"]).reverse();
+                const timeKey = "Time Series (5min)";
+                if (data[timeKey]) {
+                    const times = Object.keys(data[timeKey]).reverse();
                     const candleData = times.map(t => ({
                         x: new Date(t),
-                        y: [data["Time Series (5min)"][t]["1. open"], data["Time Series (5min)"][t]["2. high"], data["Time Series (5min)"][t]["3. low"], data["Time Series (5min)"][t]["4. close"]].map(Number)
+                        y: [data[timeKey][t]["1. open"], data[timeKey][t]["2. high"], data[timeKey][t]["3. low"], data[timeKey][t]["4. close"]].map(Number)
                     }));
 
                     const closePrices = candleData.map(c => c.y[3]);
@@ -84,9 +88,55 @@
                     let markers = [];
                     for(let i = 20; i < candleData.length; i++) {
                         if(closePrices[i] > ema20[i] && closePrices[i-1] <= ema20[i-1]) {
-                            markers.push({ x: candleData[i].x.getTime(), y: candleData[i].y[2], markerSize: 8, fillColor: '#238636', label: { text: 'BUY' } });
+                            markers.push({ x: candleData[i].x.getTime(), y: candleData[i].y[2], markerSize: 6, fillColor: '#238636', label: { text: 'BUY', style: { color: '#fff', background: '#238636' } } });
                         } else if(closePrices[i] < ema20[i] && closePrices[i-1] >= ema20[i-1]) {
-                            markers.push({ x: candleData[i].x.getTime(), y:
+                            markers.push({ x: candleData[i].x.getTime(), y: candleData[i].y[1], markerSize: 6, fillColor: '#da3633', label: { text: 'SELL', style: { color: '#fff', background: '#da3633' } } });
+                        }
+                    }
+
+                    document.getElementById(priceId).innerText = "₹ " + closePrices[closePrices.length-1].toLocaleString('en-IN');
+                    renderChart(chartId, candleData, ema20, markers);
+                } else {
+                    document.getElementById(priceId).innerText = "API Limit";
+                }
+            } catch (e) {
+                document.getElementById(priceId).innerText = "Error";
+            }
+        }
+
+        function renderChart(id, candles, ema, signals) {
+            const options = {
+                series: [{ name: 'Price', type: 'candlestick', data: candles }, { name: '20 EMA', type: 'line', data: candles.map((c, i) => ({ x: c.x, y: ema[i] })) }],
+                chart: { height: 350, type: 'line', background: 'transparent', toolbar: { show: false }, zoom: { enabled: false } },
+                theme: { mode: currentTheme },
+                stroke: { width: [1, 2], colors: ['#ff4560', '#58a6ff'] },
+                annotations: { points: signals },
+                xaxis: { type: 'datetime', labels: { style: { colors: '#8b949e' } } },
+                yaxis: { labels: { style: { colors: '#8b949e' } } },
+                plotOptions: { candlestick: { colors: { upward: '#238636', downward: '#da3633' } } }
+            };
+            const chartDiv = document.getElementById(id);
+            chartDiv.innerHTML = "";
+            new ApexCharts(chartDiv, options).render();
+        }
+
+        async function refreshAll() {
+            const status = document.getElementById('api-status');
+            status.innerText = "🔄 Syncing Market Data...";
+            // NSE symbols often need different formatting on Alpha Vantage, using indices symbols
+            await fetchMarketData("nifty-price", "chart-nifty", "NIFTY");
+            setTimeout(async () => {
+                await fetchMarketData("sensex-price", "chart-sensex", "SENSEX");
+                status.innerText = "✅ Last Update: " + new Date().toLocaleTimeString();
+            }, 5000); // Increased delay to prevent API overlap
+        }
+
+        refreshAll();
+        setInterval(refreshAll, 300000); 
+    </script>
+</body>
+</html>
+
         
 
 
