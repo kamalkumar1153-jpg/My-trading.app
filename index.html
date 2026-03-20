@@ -3,112 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Signal Terminal - Buy/Sell</title>
+    <title>AI Alpha Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
-        body { background-color: #0d1117; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 10px; }
-        .card { background: #161b22; padding: 15px; border-radius: 12px; border: 1px solid #30363d; margin-bottom: 20px; max-width: 950px; margin: auto; }
-        .price-text { font-size: 26px; font-weight: bold; color: #238636; margin: 5px 0; }
-        .legend { font-size: 12px; color: #8b949e; margin-bottom: 10px; }
+        :root {
+            --bg-color: #0d1117; --card-bg: #161b22; --text-color: white; --border: #30363d; --ticker-bg: #1f2428;
+        }
+        .light-mode {
+            --bg-color: #f6f8fa; --card-bg: #ffffff; --text-color: #24292f; --border: #d0d7de; --ticker-bg: #ebf0f4;
+        }
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: sans-serif; text-align: center; margin: 0; padding: 0; transition: 0.3s; overflow-x: hidden; }
+        .container { padding: 10px; }
+        .card { background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border); margin: 10px auto; max-width: 950px; }
+        .price-text { font-size: 30px; font-weight: bold; color: #238636; margin: 10px 0; }
+        
+        .controls { margin: 15px 0; display: flex; justify-content: center; gap: 10px; }
+        .btn { padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; border: 1px solid var(--border); background: var(--card-bg); color: #58a6ff; }
+        .btn:disabled { color: #8b949e; cursor: not-allowed; }
+
+        /* 📰 News Ticker Style */
+        .ticker-wrap { position: fixed; bottom: 0; width: 100%; overflow: hidden; height: 35px; background-color: var(--ticker-bg); border-top: 1px solid var(--border); z-index: 100; }
+        .ticker { display: inline-block; white-space: nowrap; padding-right: 100%; animation: ticker 30s linear infinite; line-height: 35px; font-size: 14px; font-weight: bold; }
+        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
+        .ticker-item { display: inline-block; padding: 0 2rem; color: #58a6ff; }
+
+        .status { font-size: 12px; color: #8b949e; margin-bottom: 5px; }
+        #chart-nifty { height: 450px; }
     </style>
 </head>
 <body>
 
-    <h1>🚀 AI Buy/Sell Terminal</h1>
-    <p class="legend">🟢 Buy Arrow | 🔴 Sell Arrow | 🔵 20 EMA Line</p>
+    <div class="container">
+        <h1>🚀 AI Alpha Terminal</h1>
+        
+        <div class="controls">
+            <button id="refreshBtn" class="btn" onclick="fetchSignals()">🔄 Refresh</button>
+            <button class="btn" onclick="toggleTheme()">🌓 Switch Mode</button>
+        </div>
+        
+        <div id="api-status" class="status">System Ready</div>
 
-    <div class="card">
-        <h2>NIFTY 50</h2>
-        <div id="nifty-price" class="price-text">Loading...</div>
-        <div id="chart-nifty"></div>
+        <div class="card">
+            <h2>NIFTY 50</h2>
+            <div id="price-nifty" class="price-text">₹ 0.00</div>
+            <div id="chart-nifty"></div>
+        </div>
+    </div>
+
+    <div class="ticker-wrap">
+        <div class="ticker" id="newsTicker">
+            <span class="ticker-item">📢 Loading Market News...</span>
+            <span class="ticker-item">🚀 Nifty Technicals: 20 EMA Support Active</span>
+            <span class="ticker-item">💰 RBI Policy Update Coming Soon</span>
+            <span class="ticker-item">🌍 Global Markets: US Tech Stocks Rising</span>
+        </div>
     </div>
 
     <script>
-        const API_KEY = '116ae9781b96425181ecce7d513022bc';
+        const ALPHA_KEY = 'YOUR_FREE_KEY'; 
+        let currentTheme = 'dark';
+        let chart = null;
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            currentTheme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
+            fetchSignals(); 
+        }
 
         function calculateEMA(data, period) {
             let k = 2 / (period + 1);
-            let emaArray = [];
-            let ema = data[0];
-            for (let i = 0; i < data.length; i++) {
-                ema = (data[i] * k) + (ema * (1 - k));
-                emaArray.push(parseFloat(ema.toFixed(2)));
+            let emaArray = [data[0]];
+            for (let i = 1; i < data.length; i++) {
+                emaArray.push(parseFloat((data[i] * k + emaArray[i - 1] * (1 - k)).toFixed(2)));
             }
             return emaArray;
         }
 
-        async function fetchAndDraw(chartId, priceId, apiSymbol) {
-            try {
-                // Fetch RSI and Candles
-                const res = await fetch(`https://api.twelvedata.com/time_series?symbol=${apiSymbol}&interval=5min&outputsize=80&apikey=${API_KEY}`);
-                const rsiRes = await fetch(`https://api.twelvedata.com/rsi?symbol=${apiSymbol}&interval=5min&outputsize=80&apikey=${API_KEY}`);
-                
-                const data = await res.json();
-                const rsiData = await rsiRes.json();
+        async function fetchSignals() {
+            const status = document.getElementById('api-status');
+            const btn = document.getElementById('refreshBtn');
+            btn.disabled = true;
+            status.innerText = "Fetching Fresh Data...";
 
-                if (data.values && rsiData.values) {
-                    const rawData = data.values.reverse();
-                    const rsis = rsiData.values.reverse();
-                    
-                    const candleSeries = rawData.map(v => ({
-                        x: new Date(v.datetime),
-                        y: [parseFloat(v.open), parseFloat(v.high), parseFloat(v.low), parseFloat(v.close)]
+            try {
+                const url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=NSE:NIFTY&interval=5min&apikey=${ALPHA_KEY}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data["Time Series (5min)"]) {
+                    const timeSeries = data["Time Series (5min)"];
+                    const dates = Object.keys(timeSeries).reverse();
+                    const candleData = dates.map(d => ({
+                        x: new Date(d),
+                        y: [timeSeries[d]["1. open"], timeSeries[d]["2. high"], timeSeries[d]["3. low"], timeSeries[d]["4. close"]].map(Number)
                     }));
 
-                    const closePrices = rawData.map(v => parseFloat(v.close));
+                    const closePrices = candleData.map(c => c.y[3]);
                     const ema20 = calculateEMA(closePrices, 20);
-
-                    // Markers Logic
                     let markers = [];
-                    for(let i = 1; i < rawData.length; i++) {
-                        let price = parseFloat(rawData[i].close);
-                        let rsi = parseFloat(rsis[i].rsi);
-
-                        if(price > ema20[i] && rsi > 60) {
-                            markers.push({
-                                x: new Date(rawData[i].datetime).getTime(),
-                                y: parseFloat(rawData[i].low),
-                                markerSize: 6,
-                                fillColor: '#238636',
-                                strokeColor: '#fff',
-                                label: { text: 'BUY', style: { background: '#238636', color: '#fff' } }
-                            });
-                        } else if(price < ema20[i] && rsi < 40) {
-                            markers.push({
-                                x: new Date(rawData[i].datetime).getTime(),
-                                y: parseFloat(rawData[i].high),
-                                markerSize: 6,
-                                fillColor: '#da3633',
-                                strokeColor: '#fff',
-                                label: { text: 'SELL', style: { background: '#da3633', color: '#fff' } }
-                            });
+                    for(let i = 20; i < candleData.length; i++) {
+                        if(closePrices[i] > ema20[i] && closePrices[i-1] <= ema20[i-1]) {
+                            markers.push({ x: candleData[i].x.getTime(), y: candleData[i].y[2], markerSize: 8, fillColor: '#238636', label: { text: 'BUY' } });
+                        } else if(closePrices[i] < ema20[i] && closePrices[i-1] >= ema20[i-1]) {
+                            markers.push({ x: candleData[i].x.getTime(), y: candleData[i].y[1], markerSize: 8, fillColor: '#da3633', label: { text: 'SELL' } });
                         }
                     }
 
-                    document.getElementById(priceId).innerText = "₹ " + closePrices[closePrices.length-1].toLocaleString('en-IN');
-
-                    const options = {
-                        series: [
-                            { name: 'Candles', type: 'candlestick', data: candleSeries },
-                            { name: '20 EMA', type: 'line', data: rawData.map((v, i) => ({ x: new Date(v.datetime), y: ema20[i] })) }
-                        ],
-                        chart: { height: 450, type: 'line', background: 'transparent', toolbar: { show: false } },
-                        stroke: { width: [1, 2], colors: ['#ff4560', '#58a6ff'] },
-                        annotations: { points: markers },
-                        xaxis: { type: 'datetime' },
-                        theme: { mode: 'dark' },
-                        plotOptions: { candlestick: { colors: { upward: '#238636', downward: '#da3633' } } }
-                    };
-
-                    new ApexCharts(document.querySelector("#" + chartId), options).render();
+                    document.getElementById('price-nifty').innerText = "₹ " + closePrices[closePrices.length-1].toLocaleString('en-IN');
+                    renderChart(candleData, ema20, markers);
+                    status.innerText = "Updated: " + new Date().toLocaleTimeString();
+                    status.style.color = "#238636";
+                } else {
+                    status.innerText = "API Limit! Please wait 1 min.";
+                    status.style.color = "#da3633";
                 }
-            } catch (e) { console.log(e); }
+            } catch (e) { status.innerText = "Error."; }
+            setTimeout(() => { btn.disabled = false; }, 5000);
         }
 
-        fetchAndDraw("chart-nifty", "nifty-price", "NI50");
+        function renderChart(candles, ema, signals) {
+            const options = {
+                series: [
+                    { name: 'Price', type: 'candlestick', data: candles },
+                    { name: '20 EMA', type: 'line', data: candles.map((c, i) => ({ x: c.x, y: ema[i] })) }
+                ],
+                chart: { height: 450, type: 'line', background: 'transparent', toolbar: { show: false } },
+                theme: { mode: currentTheme },
+                stroke: { width: [1, 2], colors: ['#ff4560', '#58a6ff'] },
+                annotations: { points: signals },
+                xaxis: { type: 'datetime' },
+                plotOptions: { candlestick: { colors: { upward: '#238636', downward: '#da3633' } } }
+            };
+            document.getElementById('chart-nifty').innerHTML = "";
+            chart = new ApexCharts(document.querySelector("#chart-nifty"), options);
+            chart.render();
+        }
+
+        fetchSignals();
     </script>
 </body>
 </html>
+
 
 
 
