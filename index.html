@@ -3,94 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Market AI Chart Pro</title>
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <title>AI Market Terminal Pro</title>
     <style>
-        body { background: #0d1117; color: white; font-family: sans-serif; margin: 0; padding: 10px; text-align: center; }
-        .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 15px; margin: 10px auto; max-width: 900px; }
-        #chart-container { height: 400px; width: 100%; margin-top: 15px; }
-        .price { font-size: 32px; font-weight: bold; color: #238636; margin: 10px 0; }
-        .btn { background: #21262d; color: #58a6ff; border: 1px solid #30363d; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .status { font-size: 12px; color: #8b949e; margin-bottom: 5px; }
+        body { 
+            background: #0d1117; 
+            color: white; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            padding: 20px; 
+            margin: 0;
+        }
+        .container { max-width: 400px; margin: auto; }
+        h1 { color: #58a6ff; font-size: 24px; margin-bottom: 25px; }
+        
+        .card { 
+            background: #161b22; 
+            border: 1px solid #30363d; 
+            border-radius: 16px; 
+            padding: 25px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+        }
+        .card:active { transform: scale(0.98); }
+        
+        .label { font-size: 14px; color: #8b949e; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+        .price { font-size: 36px; font-weight: bold; color: #3fb950; }
+        
+        .status-bar { 
+            font-size: 12px; 
+            color: #8b949e; 
+            background: #010409; 
+            padding: 10px; 
+            border-radius: 8px; 
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .live-dot { height: 8px; width: 8px; background-color: #3fb950; border-radius: 50%; display: inline-block; margin-right: 5px; animation: blink 1s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <h1>🚀 Market AI Terminal</h1>
-    <div class="status" id="api-msg">Ready to Load Data</div>
-    <button class="btn" onclick="fetchStockData()">📊 Load Nifty Chart</button>
+    <div class="container">
+        <h1>🚀 Market AI Terminal</h1>
 
-    <div class="card">
-        <h3>NIFTY 50 (5 Min Chart)</h3>
-        <div id="nifty-price" class="price">₹ --</div>
-        <div id="chart-container"></div>
+        <div class="card">
+            <div class="label">NIFTY 50</div>
+            <div id="nifty" class="price">₹ --</div>
+        </div>
+
+        <div class="card">
+            <div class="label">SENSEX</div>
+            <div id="sensex" class="price">₹ --</div>
+        </div>
+
+        <div class="status-bar">
+            <span class="live-dot"></span>
+            <span id="update-msg">Connecting to Google Finance...</span>
+        </div>
     </div>
 
     <script>
-        const API_KEY = 'X9RBP7WIUXD6XO3C';
-        let chart, candlestickSeries;
+        // Aapka provide kiya gaya CSV link
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTD0ZnUTuU1M7K2Uc5APr3UlEbA3huIUqi8Nzazi9BPrNZXTvEtvbM1RigUPSGfCJWRmFdVOMMoOogL/pub?output=csv';
 
-        // Initialize Chart
-        function initChart() {
-            const container = document.getElementById('chart-container');
-            chart = LightweightCharts.createChart(container, {
-                width: container.clientWidth,
-                height: 400,
-                layout: { backgroundColor: '#161b22', textColor: '#d1d4dc' },
-                grid: { vertLines: { color: '#30363d' }, horzLines: { color: '#30363d' } },
-                crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-                priceScale: { borderColor: '#30363d' },
-                timeScale: { borderColor: '#30363d', timeVisible: true, secondsVisible: false }
-            });
-            candlestickSeries = chart.addCandlestickSeries({
-                upColor: '#26a69a', downColor: '#ef5350', borderVisible: false,
-                wickUpColor: '#26a69a', wickDownColor: '#ef5350'
-            });
-        }
-
-        async function fetchStockData() {
-            const msg = document.getElementById('api-msg');
-            msg.innerText = "Connecting to API...";
-            
+        async function refreshMarketData() {
             try {
-                const url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=NSE:NIFTY&interval=5min&apikey=${API_KEY}`;
-                const res = await fetch(url);
-                const data = await res.json();
+                const response = await fetch(CSV_URL);
+                const text = await response.text();
+                const rows = text.split('\n');
 
-                if (data["Note"]) {
-                    msg.innerText = "❌ API Limit Reached! Wait 1 minute.";
-                    return;
+                // Row 1 (A1) for Nifty, Row 2 (A2) for Sensex
+                const niftyRaw = rows[0].split(',')[0];
+                const sensexRaw = rows[1].split(',')[0];
+
+                if (niftyRaw && !isNaN(niftyRaw)) {
+                    document.getElementById('nifty').innerText = "₹ " + parseFloat(niftyRaw).toLocaleString('en-IN');
+                    document.getElementById('sensex').innerText = "₹ " + parseFloat(sensexRaw).toLocaleString('en-IN');
+                    document.getElementById('update-msg').innerText = "Live: " + new Date().toLocaleTimeString();
                 }
-
-                const timeSeries = data["Time Series (5min)"];
-                if (timeSeries) {
-                    const formattedData = Object.keys(timeSeries).map(time => ({
-                        time: new Date(time).getTime() / 1000,
-                        open: parseFloat(timeSeries[time]["1. open"]),
-                        high: parseFloat(timeSeries[time]["2. high"]),
-                        low: parseFloat(timeSeries[time]["3. low"]),
-                        close: parseFloat(timeSeries[time]["4. close"])
-                    })).sort((a, b) => a.time - b.time);
-
-                    if (!chart) initChart();
-                    candlestickSeries.setData(formattedData);
-                    document.getElementById('nifty-price').innerText = "₹ " + formattedData[formattedData.length-1].close.toLocaleString('en-IN');
-                    msg.innerText = "✅ Chart Updated: " + new Date().toLocaleTimeString();
-                } else {
-                    msg.innerText = "⚠️ Market Data Not Found (Check Symbol)";
-                }
-            } catch (e) {
-                msg.innerText = "📡 Network Error. Check Internet.";
+            } catch (err) {
+                document.getElementById('update-msg').innerText = "Sync Error: Check Connection";
             }
         }
 
-        // Handle resizing
-        window.addEventListener('resize', () => {
-            if (chart) chart.resize(document.getElementById('chart-container').clientWidth, 400);
-        });
+        // Har 10 second mein refresh karega
+        setInterval(refreshMarketData, 10000);
+        refreshMarketData();
     </script>
 </body>
 </html>
+
 
 
 
