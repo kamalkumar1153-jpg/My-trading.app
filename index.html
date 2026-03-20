@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Market Terminal - Fixed</title>
+    <title>AI Market Terminal - Final Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { background-color: #0d1117; color: #c9d1d9; font-family: sans-serif; text-align: center; margin: 0; padding: 15px; }
@@ -21,19 +21,19 @@
     <div class="grid">
         <div class="card">
             <div class="label">Nifty 50</div>
-            <div id="niftyPrice" class="price">Loading...</div>
+            <div id="niftyPrice" class="price">Fetching...</div>
             <canvas id="niftyChart"></canvas>
         </div>
 
         <div class="card">
             <div class="label">Sensex</div>
-            <div id="sensexPrice" class="price">Loading...</div>
+            <div id="sensexPrice" class="price">Fetching...</div>
             <canvas id="sensexChart"></canvas>
         </div>
 
         <div class="card">
             <div class="label">Bank Nifty</div>
-            <div id="bankPrice" class="price">Loading...</div>
+            <div id="bankPrice" class="price">Fetching...</div>
             <canvas id="bankChart"></canvas>
         </div>
     </div>
@@ -43,17 +43,19 @@
 
         async function getData(symbol, priceId, chartId) {
             try {
-                // Price Fetch
+                // Symbols for Twelve Data: Nifty = NI50, Sensex = SENSEX
                 const pRes = await fetch(`https://api.twelvedata.com/price?symbol=${symbol}&apikey=${API_KEY}`);
                 const pData = await pRes.json();
                 
                 if(pData.price) {
                     document.getElementById(priceId).innerText = "₹ " + parseFloat(pData.price).toLocaleString('en-IN');
+                    document.getElementById(priceId).style.color = "#238636";
                 } else {
-                    document.getElementById(priceId).innerText = "Closed/Error";
+                    // Agar limit hit ho gayi ho
+                    document.getElementById(priceId).innerText = "Limit Reached";
+                    document.getElementById(priceId).style.color = "#f85149";
                 }
 
-                // Chart Data Fetch
                 const cRes = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1h&outputsize=12&apikey=${API_KEY}`);
                 const cData = await cRes.json();
 
@@ -62,7 +64,9 @@
                     const labels = cData.values.map(v => v.datetime.split(' ')[1].substring(0,5)).reverse();
                     drawChart(chartId, labels, prices);
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                document.getElementById(priceId).innerText = "Offline";
+            }
         }
 
         function drawChart(id, labels, data) {
@@ -82,24 +86,25 @@
                 },
                 options: {
                     plugins: { legend: { display: false } },
-                    scales: { x: { display: false }, y: { grid: { color: '#30363d' } } }
+                    scales: { x: { display: false }, y: { display: true, grid: { color: '#30363d' } } }
                 }
             });
         }
 
-        // Twelve Data ke liye correct symbols
         function refreshAll() {
-            getData('NIFTY', 'niftyPrice', 'niftyChart');
+            // Twelve Data symbols adjust kiye hain
+            getData('NI50', 'niftyPrice', 'niftyChart'); 
             getData('SENSEX', 'sensexPrice', 'sensexChart');
-            getData('BANKNIFTY', 'bankPrice', 'bankChart');
+            getData('CNXBANK', 'bankPrice', 'bankChart');
         }
 
         refreshAll();
-        // Har 2 minute mein update (API limit bachane ke liye)
+        // Har 2 min me refresh (Free API limit ke liye)
         setInterval(refreshAll, 120000);
     </script>
 </body>
 </html>
+
 
 
 
