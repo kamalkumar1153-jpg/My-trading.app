@@ -3,107 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Market Terminal - Final Fix</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>AI Market Dashboard</title>
     <style>
-        body { background-color: #0d1117; color: #c9d1d9; font-family: sans-serif; text-align: center; margin: 0; padding: 15px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; max-width: 1200px; margin: auto; }
-        .card { background: #161b22; padding: 15px; border-radius: 12px; border: 1px solid #30363d; }
-        .price { font-size: 28px; font-weight: bold; color: #238636; margin: 5px 0; }
-        .label { color: #8b949e; font-size: 14px; text-transform: uppercase; }
-        canvas { margin-top: 10px; max-height: 200px; }
+        body { background-color: #0d1117; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 10px; }
+        .chart-container { height: 450px; margin-bottom: 30px; border: 1px solid #30363d; border-radius: 12px; overflow: hidden; background: #161b22; }
+        h1 { color: #58a6ff; margin-bottom: 20px; }
+        h2 { text-align: left; font-size: 16px; margin: 10px; color: #8b949e; }
     </style>
 </head>
 <body>
 
-    <h1>🚀 Market AI Terminal</h1>
-    
-    <div class="grid">
-        <div class="card">
-            <div class="label">Nifty 50</div>
-            <div id="niftyPrice" class="price">Fetching...</div>
-            <canvas id="niftyChart"></canvas>
-        </div>
+    <h1>🚀 AI Auto Signal Terminal</h1>
 
-        <div class="card">
-            <div class="label">Sensex</div>
-            <div id="sensexPrice" class="price">Fetching...</div>
-            <canvas id="sensexChart"></canvas>
-        </div>
+    <h2>NIFTY 50 (5m + 20 EMA + RSI)</h2>
+    <div class="chart-container" id="chart_nifty"></div>
 
-        <div class="card">
-            <div class="label">Bank Nifty</div>
-            <div id="bankPrice" class="price">Fetching...</div>
-            <canvas id="bankChart"></canvas>
-        </div>
-    </div>
+    <h2>SENSEX (5m + 20 EMA + RSI)</h2>
+    <div class="chart-container" id="chart_sensex"></div>
 
-    <script>
-        const API_KEY = '116ae9781b96425181ecce7d513022bc';
+    <h2>BANK NIFTY (5m + 20 EMA + RSI)</h2>
+    <div class="chart-container" id="chart_bank"></div>
 
-        async function getData(symbol, priceId, chartId) {
-            try {
-                // Symbols for Twelve Data: Nifty = NI50, Sensex = SENSEX
-                const pRes = await fetch(`https://api.twelvedata.com/price?symbol=${symbol}&apikey=${API_KEY}`);
-                const pData = await pRes.json();
-                
-                if(pData.price) {
-                    document.getElementById(priceId).innerText = "₹ " + parseFloat(pData.price).toLocaleString('en-IN');
-                    document.getElementById(priceId).style.color = "#238636";
-                } else {
-                    // Agar limit hit ho gayi ho
-                    document.getElementById(priceId).innerText = "Limit Reached";
-                    document.getElementById(priceId).style.color = "#f85149";
-                }
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 
-                const cRes = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1h&outputsize=12&apikey=${API_KEY}`);
-                const cData = await cRes.json();
-
-                if(cData.values) {
-                    const prices = cData.values.map(v => parseFloat(v.close)).reverse();
-                    const labels = cData.values.map(v => v.datetime.split(' ')[1].substring(0,5)).reverse();
-                    drawChart(chartId, labels, prices);
-                }
-            } catch (e) { 
-                document.getElementById(priceId).innerText = "Offline";
-            }
-        }
-
-        function drawChart(id, labels, data) {
-            const ctx = document.getElementById(id).getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        borderColor: '#58a6ff',
-                        borderWidth: 2,
-                        fill: false,
-                        tension: 0.4,
-                        pointRadius: 0
-                    }]
-                },
-                options: {
-                    plugins: { legend: { display: false } },
-                    scales: { x: { display: false }, y: { display: true, grid: { color: '#30363d' } } }
-                }
+    <script type="text/javascript">
+        function createWidget(container, symbol) {
+            new TradingView.widget({
+                "autosize": true,
+                "symbol": symbol,
+                "interval": "5",
+                "timezone": "Asia/Kolkata",
+                "theme": "dark",
+                "style": "1",
+                "locale": "in",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "hide_top_toolbar": false,
+                "save_image": false,
+                "container_id": container,
+                "studies": [
+                    { "id": "MASimple@tv-basicstudies", "inputs": { "length": 20 } },
+                    { "id": "RSI@tv-basicstudies", "inputs": { "length": 14 } }
+                ]
             });
         }
 
-        function refreshAll() {
-            // Twelve Data symbols adjust kiye hain
-            getData('NI50', 'niftyPrice', 'niftyChart'); 
-            getData('SENSEX', 'sensexPrice', 'sensexChart');
-            getData('CNXBANK', 'bankPrice', 'bankChart');
-        }
-
-        refreshAll();
-        // Har 2 min me refresh (Free API limit ke liye)
-        setInterval(refreshAll, 120000);
+        // Ye symbols bilkul sahi hain, inme Apple nahi dikhega
+        createWidget("chart_nifty", "NSE:NIFTY");
+        createWidget("chart_sensex", "BSE:SENSEX");
+        createWidget("chart_bank", "NSE:BANKNIFTY");
     </script>
+
 </body>
 </html>
+
 
 
 
