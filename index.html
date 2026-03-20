@@ -1,99 +1,33 @@
-<!DOCTYPE html>
-<html lang="hi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Market Terminal Pro</title>
-    <style>
-        body { 
-            background: #0d1117; 
-            color: white; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            text-align: center; 
-            padding: 20px; 
-            margin: 0;
+async function refreshMarketData() {
+    try {
+        const response = await fetch(CSV_URL);
+        const text = await response.text();
+        const rows = text.split('\n');
+
+        // Nifty Data (Row 1)
+        const nPrice = parseFloat(rows[0].split(',')[0]);
+        const nEMA = parseFloat(rows[0].split(',')[1]);
+
+        // Sensex Data (Row 2)
+        const sPrice = parseFloat(rows[1].split(',')[0]);
+        const sEMA = parseFloat(rows[1].split(',')[1]);
+
+        if (nPrice) {
+            // Nifty Update with Trend
+            const nTrend = nPrice > nEMA ? "Bullish 📈" : "Bearish 📉";
+            document.getElementById('nifty').innerHTML = `₹ ${nPrice.toLocaleString('en-IN')} <br> <span style="font-size:14px; color:#8b949e;">Trend: ${nTrend}</span>`;
+            
+            // Sensex Update with Trend
+            const sTrend = sPrice > sEMA ? "Bullish 📈" : "Bearish 📉";
+            document.getElementById('sensex').innerHTML = `₹ ${sPrice.toLocaleString('en-IN')} <br> <span style="font-size:14px; color:#8b949e;">Trend: ${sTrend}</span>`;
+            
+            document.getElementById('update-msg').innerText = "Live: " + new Date().toLocaleTimeString();
         }
-        .container { max-width: 400px; margin: auto; }
-        h1 { color: #58a6ff; font-size: 24px; margin-bottom: 25px; }
-        
-        .card { 
-            background: #161b22; 
-            border: 1px solid #30363d; 
-            border-radius: 16px; 
-            padding: 25px; 
-            margin-bottom: 20px; 
-            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
-            transition: transform 0.2s;
-        }
-        .card:active { transform: scale(0.98); }
-        
-        .label { font-size: 14px; color: #8b949e; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
-        .price { font-size: 36px; font-weight: bold; color: #3fb950; }
-        
-        .status-bar { 
-            font-size: 12px; 
-            color: #8b949e; 
-            background: #010409; 
-            padding: 10px; 
-            border-radius: 8px; 
-            display: inline-block;
-            margin-top: 10px;
-        }
-        .live-dot { height: 8px; width: 8px; background-color: #3fb950; border-radius: 50%; display: inline-block; margin-right: 5px; animation: blink 1s infinite; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-    </style>
-</head>
-<body>
+    } catch (err) {
+        document.getElementById('update-msg').innerText = "Sync Error!";
+    }
+}
 
-    <div class="container">
-        <h1>🚀 Market AI Terminal</h1>
-
-        <div class="card">
-            <div class="label">NIFTY 50</div>
-            <div id="nifty" class="price">₹ --</div>
-        </div>
-
-        <div class="card">
-            <div class="label">SENSEX</div>
-            <div id="sensex" class="price">₹ --</div>
-        </div>
-
-        <div class="status-bar">
-            <span class="live-dot"></span>
-            <span id="update-msg">Connecting to Google Finance...</span>
-        </div>
-    </div>
-
-    <script>
-        // Aapka provide kiya gaya CSV link
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTD0ZnUTuU1M7K2Uc5APr3UlEbA3huIUqi8Nzazi9BPrNZXTvEtvbM1RigUPSGfCJWRmFdVOMMoOogL/pub?output=csv';
-
-        async function refreshMarketData() {
-            try {
-                const response = await fetch(CSV_URL);
-                const text = await response.text();
-                const rows = text.split('\n');
-
-                // Row 1 (A1) for Nifty, Row 2 (A2) for Sensex
-                const niftyRaw = rows[0].split(',')[0];
-                const sensexRaw = rows[1].split(',')[0];
-
-                if (niftyRaw && !isNaN(niftyRaw)) {
-                    document.getElementById('nifty').innerText = "₹ " + parseFloat(niftyRaw).toLocaleString('en-IN');
-                    document.getElementById('sensex').innerText = "₹ " + parseFloat(sensexRaw).toLocaleString('en-IN');
-                    document.getElementById('update-msg').innerText = "Live: " + new Date().toLocaleTimeString();
-                }
-            } catch (err) {
-                document.getElementById('update-msg').innerText = "Sync Error: Check Connection";
-            }
-        }
-
-        // Har 10 second mein refresh karega
-        setInterval(refreshMarketData, 10000);
-        refreshMarketData();
-    </script>
-</body>
-</html>
 
 
 
