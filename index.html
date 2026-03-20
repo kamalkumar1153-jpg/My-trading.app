@@ -3,139 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Dual Terminal Pro</title>
+    <title>AI Chart Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --text: white; --border: #30363d; --accent: #58a6ff; }
-        .light-mode { --bg: #f6f8fa; --card: #ffffff; --text: #24292f; --border: #d0d7de; }
-        body { background-color: var(--bg); color: var(--text); font-family: sans-serif; text-align: center; margin: 0; padding-bottom: 60px; transition: 0.3s; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; padding: 10px; max-width: 1200px; margin: auto; }
-        .card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
-        .price-text { font-size: 28px; font-weight: bold; color: #238636; margin: 10px 0; }
-        .btn-group { margin: 15px 0; display: flex; justify-content: center; gap: 10px; }
-        .btn { padding: 10px 15px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--accent); cursor: pointer; font-weight: bold; font-size: 14px; }
-        .status { font-size: 12px; color: #8b949e; margin-bottom: 10px; }
-        .ticker-wrap { position: fixed; bottom: 0; width: 100%; background: var(--card); border-top: 1px solid var(--border); overflow: hidden; height: 35px; z-index: 1000; }
-        .ticker { white-space: nowrap; display: inline-block; animation: scroll 35s linear infinite; line-height: 35px; color: var(--accent); font-weight: bold; }
-        @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+        body { background: #0d1117; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 10px; }
+        .card { background: #161b22; padding: 20px; border-radius: 12px; border: 1px solid #30363d; margin: 10px auto; max-width: 900px; }
+        .price { font-size: 32px; font-weight: bold; color: #238636; margin-bottom: 10px; }
+        .btn { background: #21262d; color: #58a6ff; border: 1px solid #30363d; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 15px 0; }
+        #chart-nifty { min-height: 450px; width: 100%; margin-top: 10px; }
+        .status { font-size: 13px; color: #8b949e; }
     </style>
 </head>
 <body>
 
     <h1>🚀 Market AI Terminal</h1>
-    
-    <div class="btn-group">
-        <button id="refreshBtn" class="btn" onclick="refreshAll()">🔄 Manual Refresh</button>
-        <button class="btn" onclick="toggleTheme()">🌓 Switch Mode</button>
-    </div>
-    
-    <div id="api-status" class="status">Connecting to Market Data...</div>
+    <button class="btn" onclick="loadChartData()">📊 Load / Refresh Chart</button>
+    <div id="status-msg" class="status">System Ready. Click Load.</div>
 
-    <div class="grid">
-        <div class="card">
-            <h3>NIFTY 50</h3>
-            <div id="nifty-price" class="price-text">Loading...</div>
-            <div id="chart-nifty"></div>
-        </div>
-        <div class="card">
-            <h3>SENSEX</h3>
-            <div id="sensex-price" class="price-text">Loading...</div>
-            <div id="chart-sensex"></div>
-        </div>
-    </div>
-
-    <div class="ticker-wrap">
-        <div class="ticker">📊 AI Signal Active: 🟢 BUY Above 20 EMA | 🔴 SELL Below 20 EMA | Real-time Analysis Engaged</div>
+    <div class="card">
+        <h3>NIFTY 50 (NSE)</h3>
+        <div id="nifty-val" class="price">₹ 0.00</div>
+        <div id="chart-nifty"></div>
     </div>
 
     <script>
-        const ALPHA_KEY = 'X9RBP7WIUXD6XO3C'; 
-        let currentTheme = 'dark';
+        const API_KEY = 'X9RBP7WIUXD6XO3C';
 
-        function toggleTheme() {
-            document.body.classList.toggle('light-mode');
-            currentTheme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
-            refreshAll(); 
-        }
-
-        function calculateEMA(data, period) {
-            let k = 2 / (period + 1);
-            let emaArray = [data[0]];
-            for (let i = 1; i < data.length; i++) {
-                emaArray.push(parseFloat((data[i] * k + emaArray[i - 1] * (1 - k)).toFixed(2)));
-            }
-            return emaArray;
-        }
-
-        async function fetchMarketData(priceId, chartId, symbol) {
+        async function loadChartData() {
+            const status = document.getElementById('status-msg');
+            status.innerText = "🔄 Connecting to Alpha Vantage...";
+            
             try {
-                // Time series fetch
-                const url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=5min&apikey=${ALPHA_KEY}`;
+                // Nifty data fetch logic
+                const url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=NSE:NIFTY&interval=5min&apikey=${API_KEY}`;
                 const response = await fetch(url);
                 const data = await response.json();
 
-                const timeKey = "Time Series (5min)";
-                if (data[timeKey]) {
-                    const times = Object.keys(data[timeKey]).reverse();
-                    const candleData = times.map(t => ({
-                        x: new Date(t),
-                        y: [data[timeKey][t]["1. open"], data[timeKey][t]["2. high"], data[timeKey][t]["3. low"], data[timeKey][t]["4. close"]].map(Number)
+                if (data["Note"]) {
+                    status.innerText = "⚠️ API Limit Reached! Wait 60 seconds.";
+                    return;
+                }
+
+                const series = data["Time Series (5min)"];
+                if (series) {
+                    const keys = Object.keys(series).reverse();
+                    const candleData = keys.map(time => ({
+                        x: new Date(time),
+                        y: [
+                            parseFloat(series[time]["1. open"]),
+                            parseFloat(series[time]["2. high"]),
+                            parseFloat(series[time]["3. low"]),
+                            parseFloat(series[time]["4. close"])
+                        ]
                     }));
 
-                    const closePrices = candleData.map(c => c.y[3]);
-                    const ema20 = calculateEMA(closePrices, 20);
+                    const currentPrice = candleData[candleData.length - 1].y[3];
+                    document.getElementById('nifty-val').innerText = "₹ " + currentPrice.toLocaleString('en-IN');
                     
-                    let markers = [];
-                    for(let i = 20; i < candleData.length; i++) {
-                        if(closePrices[i] > ema20[i] && closePrices[i-1] <= ema20[i-1]) {
-                            markers.push({ x: candleData[i].x.getTime(), y: candleData[i].y[2], markerSize: 6, fillColor: '#238636', label: { text: 'BUY', style: { color: '#fff', background: '#238636' } } });
-                        } else if(closePrices[i] < ema20[i] && closePrices[i-1] >= ema20[i-1]) {
-                            markers.push({ x: candleData[i].x.getTime(), y: candleData[i].y[1], markerSize: 6, fillColor: '#da3633', label: { text: 'SELL', style: { color: '#fff', background: '#da3633' } } });
-                        }
-                    }
-
-                    document.getElementById(priceId).innerText = "₹ " + closePrices[closePrices.length-1].toLocaleString('en-IN');
-                    renderChart(chartId, candleData, ema20, markers);
+                    renderChart(candleData);
+                    status.innerText = "✅ Chart Updated at " + new Date().toLocaleTimeString();
                 } else {
-                    document.getElementById(priceId).innerText = "API Limit";
+                    status.innerText = "❌ No Data Found. Market might be closed.";
                 }
-            } catch (e) {
-                document.getElementById(priceId).innerText = "Error";
+            } catch (err) {
+                status.innerText = "📡 Network Error. Try again.";
             }
         }
 
-        function renderChart(id, candles, ema, signals) {
+        function renderChart(candles) {
             const options = {
-                series: [{ name: 'Price', type: 'candlestick', data: candles }, { name: '20 EMA', type: 'line', data: candles.map((c, i) => ({ x: c.x, y: ema[i] })) }],
-                chart: { height: 350, type: 'line', background: 'transparent', toolbar: { show: false }, zoom: { enabled: false } },
-                theme: { mode: currentTheme },
-                stroke: { width: [1, 2], colors: ['#ff4560', '#58a6ff'] },
-                annotations: { points: signals },
+                series: [{ name: 'Price', data: candles }],
+                chart: { type: 'candlestick', height: 400, background: 'transparent', toolbar: { show: false } },
                 xaxis: { type: 'datetime', labels: { style: { colors: '#8b949e' } } },
                 yaxis: { labels: { style: { colors: '#8b949e' } } },
+                theme: { mode: 'dark' },
                 plotOptions: { candlestick: { colors: { upward: '#238636', downward: '#da3633' } } }
             };
-            const chartDiv = document.getElementById(id);
-            chartDiv.innerHTML = "";
-            new ApexCharts(chartDiv, options).render();
-        }
 
-        async function refreshAll() {
-            const status = document.getElementById('api-status');
-            status.innerText = "🔄 Syncing Market Data...";
-            // NSE symbols often need different formatting on Alpha Vantage, using indices symbols
-            await fetchMarketData("nifty-price", "chart-nifty", "NIFTY");
-            setTimeout(async () => {
-                await fetchMarketData("sensex-price", "chart-sensex", "SENSEX");
-                status.innerText = "✅ Last Update: " + new Date().toLocaleTimeString();
-            }, 5000); // Increased delay to prevent API overlap
+            const chartArea = document.querySelector("#chart-nifty");
+            chartArea.innerHTML = ""; // Clear old chart
+            new ApexCharts(chartArea, options).render();
         }
-
-        refreshAll();
-        setInterval(refreshAll, 300000); 
     </script>
 </body>
 </html>
+
 
         
 
