@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Smart Terminal</title>
+    <title>AI Market Terminal</title>
     <style>
         body { background: #0d1117; color: white; font-family: sans-serif; text-align: center; padding: 20px; margin: 0; }
         .container { max-width: 400px; margin: auto; }
         .card { background: #161b22; border: 1px solid #30363d; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-        .label { color: #8b949e; font-size: 14px; margin-bottom: 5px; text-transform: uppercase; }
+        .label { color: #8b949e; font-size: 14px; margin-bottom: 5px; }
         .price { font-size: 32px; font-weight: bold; color: #3fb950; }
         .trend { font-size: 16px; margin-top: 10px; font-weight: 600; padding: 8px; border-radius: 8px; display: inline-block; width: 80%; }
         .bullish { color: #3fb950; background: rgba(63, 185, 80, 0.15); border: 1px solid #238636; }
@@ -19,75 +19,58 @@
 <body>
 
     <div class="container">
-        <h2 style="color: #58a6ff; margin-top: 20px;">🚀 AI Smart Terminal</h2>
+        <h2 style="color: #58a6ff;">🚀 AI Market Terminal</h2>
         
         <div class="card">
             <div class="label">NIFTY 50</div>
-            <div id="nifty-price" class="price">₹ --</div>
-            <div id="nifty-trend" class="trend">Syncing...</div>
+            <div id="nifty-p" class="price">₹ --</div>
+            <div id="nifty-t" class="trend">Syncing...</div>
         </div>
 
         <div class="card">
             <div class="label">SENSEX</div>
-            <div id="sensex-price" class="price">₹ --</div>
-            <div id="sensex-trend" class="trend">Syncing...</div>
+            <div id="sensex-p" class="price">₹ --</div>
+            <div id="sensex-t" class="trend">Syncing...</div>
         </div>
 
-        <div id="msg" class="status">Connecting to Market Data...</div>
+        <div id="msg" class="status">Connecting...</div>
     </div>
 
     <script>
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTD0ZnUTuU1M7K2Uc5APr3UlEbA3huIUqi8Nzazi9BPrNZXTvEtvbM1RigUPSGfCJWRmFdVOMMoOogL/pub?output=csv';
+        const CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTD0ZnUTuU1M7K2Uc5APr3UlEbA3huIUqi8Nzazi9BPrNZXTvEtvbM1RigUPSGfCJWRmFdVOMMoOogL/pub?output=csv';
 
-        async function updateDashboard() {
+        async function update() {
             try {
-                const response = await fetch(CSV_URL);
-                const data = await response.text();
+                const res = await fetch(CSV);
+                const data = await res.text();
                 const rows = data.split('\n');
 
-                // Row 1: Nifty (A1=Price, B1=EMA)
-                const nPrice = parseFloat(rows[0].split(',')[0]);
-                const nEMA = parseFloat(rows[0].split(',')[1]);
+                const nP = parseFloat(rows[0].split(',')[0]);
+                const nE = parseFloat(rows[0].split(',')[1]);
+                const sP = parseFloat(rows[1].split(',')[0]);
+                const sE = parseFloat(rows[1].split(',')[1]);
 
-                // Row 2: Sensex (A2=Price, B2=EMA)
-                const sPrice = parseFloat(rows[1].split(',')[0]);
-                const sEMA = parseFloat(rows[1].split(',')[1]);
+                if (!isNaN(nP)) {
+                    document.getElementById('nifty-p').innerText = "₹ " + nP.toLocaleString('en-IN');
+                    const nt = document.getElementById('nifty-t');
+                    nt.innerText = nP > nE ? "📈 Trend: BULLISH" : "📉 Trend: BEARISH";
+                    nt.className = nP > nE ? "trend bullish" : "trend bearish";
 
-                if (!isNaN(nPrice)) {
-                    // Update Nifty
-                    document.getElementById('nifty-price').innerText = "₹ " + nPrice.toLocaleString('en-IN');
-                    const nTrendObj = document.getElementById('nifty-trend');
-                    if (nPrice > nEMA) {
-                        nTrendObj.innerText = "📈 Trend: BULLISH (BUY)";
-                        nTrendObj.className = "trend bullish";
-                    } else {
-                        nTrendObj.innerText = "📉 Trend: BEARISH (SELL)";
-                        nTrendObj.className = "trend bearish";
-                    }
+                    document.getElementById('sensex-p').innerText = "₹ " + sP.toLocaleString('en-IN');
+                    const st = document.getElementById('sensex-t');
+                    st.innerText = sP > sE ? "📈 Trend: BULLISH" : "📉 Trend: BEARISH";
+                    st.className = sP > sE ? "trend bullish" : "trend bearish";
 
-                    // Update Sensex
-                    document.getElementById('sensex-price').innerText = "₹ " + sPrice.toLocaleString('en-IN');
-                    const sTrendObj = document.getElementById('sensex-trend');
-                    if (sPrice > sEMA) {
-                        sTrendObj.innerText = "📈 Trend: BULLISH (BUY)";
-                        sTrendObj.className = "trend bullish";
-                    } else {
-                        sTrendObj.innerText = "📉 Trend: BEARISH (SELL)";
-                        sTrendObj.className = "trend bearish";
-                    }
-
-                    document.getElementById('msg').innerText = "✅ Live Sync: " + new Date().toLocaleTimeString();
+                    document.getElementById('msg').innerText = "✅ Live: " + new Date().toLocaleTimeString();
                 }
-            } catch (error) {
-                document.getElementById('msg').innerText = "❌ Sync Failed: Check CSV Link";
-            }
+            } catch (e) { document.getElementById('msg').innerText = "❌ Sync Error"; }
         }
-
-        setInterval(updateDashboard, 15000); // 15 sec refresh
-        updateDashboard();
+        setInterval(update, 15000);
+        update();
     </script>
 </body>
 </html>
+
 
 
 
