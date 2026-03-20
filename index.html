@@ -3,82 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Auto Signal Dashboard</title>
+    <title>AI Market Dashboard</title>
     <style>
-        /* CSS yahan shuru hoti hai */
-        body {
-            background-color: #0d1117;
-            color: #ffffff;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: auto;
-        }
-        .chart-box {
-            height: 500px;
-            margin-bottom: 30px;
-            border: 2px solid #30363d;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        h1 { color: #58a6ff; }
-        h2 { text-align: left; margin-left: 10px; font-size: 18px; color: #8b949e; }
+        body { background-color: #0d1117; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 10px; }
+        .chart-box { height: 450px; margin-bottom: 25px; border: 1px solid #30363d; border-radius: 8px; }
+        h2 { color: #58a6ff; text-align: left; padding-left: 10px; font-size: 18px; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Nifty & Sensex AI Dashboard</h1>
-        
-        <h2>NIFTY 50 (20 EMA + RSI)</h2>
-        <div class="chart-box" id="nifty_chart"></div>
+    <h1>🚀 AI Auto Signal Terminal</h1>
 
-        <h2>SENSEX (20 EMA + RSI)</h2>
-        <div class="chart-box" id="sensex_chart"></div>
-    </div>
+    <h2>NIFTY 50 (5 min + 20 EMA + RSI)</h2>
+    <div class="chart-box" id="nifty"></div>
+
+    <h2>SENSEX (5 min + 20 EMA + RSI)</h2>
+    <div class="chart-box" id="sensex"></div>
+
+    <h2>BANK NIFTY (5 min + 20 EMA + RSI)</h2>
+    <div class="chart-box" id="banknifty"></div>
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-
     <script type="text/javascript">
-        // Nifty Widget Logic
-        new TradingView.widget({
-            "autosize": true,
-            "symbol": "NSE:NIFTY",
-            "interval": "5",
-            "timezone": "Asia/Kolkata",
-            "theme": "dark",
-            "style": "1",
-            "locale": "in",
-            "container_id": "nifty_chart",
-            "studies": [
-                { "id": "MASimple@tv-basicstudies", "inputs": { "length": 20 } },
-                { "id": "RSI@tv-basicstudies", "inputs": { "length": 14 } }
-            ]
-        });
+        function createChart(container, symbol) {
+            new TradingView.widget({
+                "autosize": true,
+                "symbol": symbol,
+                "interval": "5",
+                "timezone": "Asia/Kolkata",
+                "theme": "dark",
+                "style": "1",
+                "locale": "in",
+                "container_id": container,
+                "studies": [
+                    { "id": "MASimple@tv-basicstudies", "inputs": { "length": 20 } },
+                    { "id": "RSI@tv-basicstudies", "inputs": { "length": 14 } }
+                ]
+            });
+        }
 
-        // Sensex Widget Logic
-        new TradingView.widget({
-            "autosize": true,
-            "symbol": "BSE:SENSEX",
-            "interval": "5",
-            "timezone": "Asia/Kolkata",
-            "theme": "dark",
-            "style": "1",
-            "locale": "in",
-            "container_id": "sensex_chart",
-            "studies": [
-                { "id": "MASimple@tv-basicstudies", "inputs": { "length": 20 } },
-                { "id": "RSI@tv-basicstudies", "inputs": { "length": 14 } }
-            ]
-        });
+        // Charts Load Karein
+        createChart("nifty", "NSE:NIFTY");
+        createChart("sensex", "BSE:SENSEX");
+        createChart("banknifty", "NSE:BANKNIFTY");
     </script>
-
 </body>
 </html>
+
 
 
 
