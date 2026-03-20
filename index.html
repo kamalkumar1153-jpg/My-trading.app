@@ -1,52 +1,43 @@
-<!DOCTYPE html>
-<html lang="hi">
-<head>
-    <style>
-        body { background: #121212; color: white; font-family: sans-serif; text-align: center; }
-        .flex-container { display: flex; justify-content: space-around; padding: 20px; flex-wrap: wrap; }
-        .card { background: #1e1e1e; padding: 20px; border-radius: 15px; width: 45%; min-width: 300px; margin: 10px; border: 1px solid #333; }
-        .signal { font-size: 40px; font-weight: bold; margin: 10px 0; }
-        .price { font-size: 20px; color: #aaa; }
-    </style>
-</head>
-<body>
-    <h1>Market Live Signals (Nifty & Sensex)</h1>
-    
-    <div class="flex-container">
-        <div class="card">
-            <h2>NIFTY 50</h2>
-            <div id="nifty-signal" class="signal">Calculating...</div>
-            <div class="price">Price: <span id="nifty-price">0</span> | RSI: <span id="nifty-rsi">0</span></div>
-        </div>
+    // Nifty 50 Chart with 20 EMA
+    new TradingView.widget({
+        "autosize": true,
+        "symbol": "NSE:NIFTY",
+        "interval": "5", // 5 minute timeframe
+        "timezone": "Asia/Kolkata",
+        "theme": "dark",
+        "style": "1",
+        "locale": "in",
+        "container_id": "tradingview_nifty",
+        "studies": [
+            {
+                "id": "MASimple@tv-basicstudies",
+                "inputs": {
+                    "length": 20
+                }
+            }
+        ]
+    });
 
-        <div class="card">
-            <h2>SENSEX</h2>
-            <div id="sensex-signal" class="signal">Calculating...</div>
-            <div class="price">Price: <span id="sensex-price">0</span> | RSI: <span id="sensex-rsi">0</span></div>
-        </div>
-    </div>
+    // Sensex Chart with 20 EMA
+    new TradingView.widget({
+        "autosize": true,
+        "symbol": "BSE:SENSEX",
+        "interval": "5",
+        "timezone": "Asia/Kolkata",
+        "theme": "dark",
+        "style": "1",
+        "locale": "in",
+        "container_id": "tradingview_sensex",
+        "studies": [
+            {
+                "id": "MASimple@tv-basicstudies",
+                "inputs": {
+                    "length": 20
+                }
+            }
+        ]
+    });
 
-    <script>
-        function updateAll() {
-            fetch('/api/data').then(res => res.json()).then(data => {
-                // Nifty Update
-                document.getElementById('nifty-signal').innerText = data.NIFTY.signal;
-                document.getElementById('nifty-signal').style.color = data.NIFTY.color;
-                document.getElementById('nifty-price').innerText = data.NIFTY.price;
-                document.getElementById('nifty-rsi').innerText = data.NIFTY.rsi;
-
-                // Sensex Update
-                document.getElementById('sensex-signal').innerText = data.SENSEX.signal;
-                document.getElementById('sensex-signal').style.color = data.SENSEX.color;
-                document.getElementById('sensex-price').innerText = data.SENSEX.price;
-                document.getElementById('sensex-rsi').innerText = data.SENSEX.rsi;
-            });
-        }
-        setInterval(updateAll, 5000);
-        updateAll();
-    </script>
-</body>
-</html>
 
 
 
