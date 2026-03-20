@@ -1,32 +1,94 @@
-async function refreshMarketData() {
-    try {
-        const response = await fetch(CSV_URL);
-        const text = await response.text();
-        const rows = text.split('\n');
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Smart Terminal</title>
+    <style>
+        body { background: #0d1117; color: white; font-family: sans-serif; text-align: center; padding: 20px; }
+        .container { max-width: 400px; margin: auto; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        .label { color: #8b949e; font-size: 14px; margin-bottom: 5px; text-transform: uppercase; }
+        .price { font-size: 32px; font-weight: bold; color: #3fb950; }
+        .trend { font-size: 16px; margin-top: 10px; font-weight: 600; padding: 5px; border-radius: 5px; display: inline-block; }
+        .bullish { color: #3fb950; background: rgba(63, 185, 80, 0.1); }
+        .bearish { color: #f85149; background: rgba(248, 81, 73, 0.1); }
+        .status { font-size: 12px; color: #8b949e; margin-top: 20px; }
+    </style>
+</head>
+<body>
 
-        // Nifty Data (Row 1)
-        const nPrice = parseFloat(rows[0].split(',')[0]);
-        const nEMA = parseFloat(rows[0].split(',')[1]);
+    <div class="container">
+        <h2 style="color: #58a6ff;">🚀 AI Smart Terminal</h2>
+        
+        <div class="card">
+            <div class="label">NIFTY 50</div>
+            <div id="nifty-price" class="price">₹ --</div>
+            <div id="nifty-trend" class="trend">Checking Trend...</div>
+        </div>
 
-        // Sensex Data (Row 2)
-        const sPrice = parseFloat(rows[1].split(',')[0]);
-        const sEMA = parseFloat(rows[1].split(',')[1]);
+        <div class="card">
+            <div class="label">SENSEX</div>
+            <div id="sensex-price" class="price">₹ --</div>
+            <div id="sensex-trend" class="trend">Checking Trend...</div>
+        </div>
 
-        if (nPrice) {
-            // Nifty Update with Trend
-            const nTrend = nPrice > nEMA ? "Bullish 📈" : "Bearish 📉";
-            document.getElementById('nifty').innerHTML = `₹ ${nPrice.toLocaleString('en-IN')} <br> <span style="font-size:14px; color:#8b949e;">Trend: ${nTrend}</span>`;
-            
-            // Sensex Update with Trend
-            const sTrend = sPrice > sEMA ? "Bullish 📈" : "Bearish 📉";
-            document.getElementById('sensex').innerHTML = `₹ ${sPrice.toLocaleString('en-IN')} <br> <span style="font-size:14px; color:#8b949e;">Trend: ${sTrend}</span>`;
-            
-            document.getElementById('update-msg').innerText = "Live: " + new Date().toLocaleTimeString();
+        <div id="msg" class="status">Connecting...</div>
+    </div>
+
+    <script>
+        // Aapka CSV Link
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTD0ZnUTuU1M7K2Uc5APr3UlEbA3huIUqi8Nzazi9BPrNZXTvEtvbM1RigUPSGfCJWRmFdVOMMoOogL/pub?output=csv';
+
+        async function updateDashboard() {
+            try {
+                const response = await fetch(CSV_URL);
+                const data = await response.text();
+                const rows = data.split('\n');
+
+                // Row 1: Nifty (A1=Price, B1=EMA)
+                const nPrice = parseFloat(rows[0].split(',')[0]);
+                const nEMA = parseFloat(rows[0].split(',')[1]);
+
+                // Row 2: Sensex (A2=Price, B2=EMA)
+                const sPrice = parseFloat(rows[1].split(',')[0]);
+                const sEMA = parseFloat(rows[1].split(',')[1]);
+
+                if (!isNaN(nPrice)) {
+                    // Update Nifty
+                    document.getElementById('nifty-price').innerText = "₹ " + nPrice.toLocaleString('en-IN');
+                    const nTrendObj = document.getElementById('nifty-trend');
+                    if (nPrice > nEMA) {
+                        nTrendObj.innerText = "📈 Trend: BULLISH (BUY)";
+                        nTrendObj.className = "trend bullish";
+                    } else {
+                        nTrendObj.innerText = "📉 Trend: BEARISH (SELL)";
+                        nTrendObj.className = "trend bearish";
+                    }
+
+                    // Update Sensex
+                    document.getElementById('sensex-price').innerText = "₹ " + sPrice.toLocaleString('en-IN');
+                    const sTrendObj = document.getElementById('sensex-trend');
+                    if (sPrice > sEMA) {
+                        sTrendObj.innerText = "📈 Trend: BULLISH (BUY)";
+                        sTrendObj.className = "trend bullish";
+                    } else {
+                        sTrendObj.innerText = "📉 Trend: BEARISH (SELL)";
+                        sTrendObj.className = "trend bearish";
+                    }
+
+                    document.getElementById('msg').innerText = "✅ Live Sync: " + new Date().toLocaleTimeString();
+                }
+            } catch (error) {
+                document.getElementById('msg').innerText = "❌ Sync Failed";
+            }
         }
-    } catch (err) {
-        document.getElementById('update-msg').innerText = "Sync Error!";
-    }
-}
+
+        setInterval(updateDashboard, 15000);
+        updateDashboard();
+    </script>
+</body>
+</html>
 
 
 
