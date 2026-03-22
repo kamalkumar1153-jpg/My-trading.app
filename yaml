@@ -18,8 +18,12 @@ jobs:
         run: pip install yfinance pandas-ta requests
       - name: Execute Script
         env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          CHAT_ID: ${{ secrets.CHAT_ID }}
+          TELEGRAM_TOKEN: ${{8600856933:AAFxdDehjmL4EDDGJIrROcvrHvbXYOfLdAU }}
+          CHAT_ID: ${{5598707490 }}
         run: python bot.py
-        
+  - name: Run Bot Script
+  env:
+    TELEGRAM_TOKEN: ${{ 8600856933:AAFxdDehjmL4EDDGJIrROcvrHvbXYOfLdAU}} # Secret ka prefix
+  run: python bot.py
+  
         
