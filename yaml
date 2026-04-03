@@ -1,29 +1,27 @@
-name: Market Auto Signal
-on:
-  schedule:
-    - cron: '*/10 * * * *' # Har 10 min mein scan karega
-  workflow_dispatch: # Manual button se bhi chala sakte hain
+async function updateLivePrice() {
+    try {
+        // NIFTY 50 ka ticker yfinance mein ^NSEI hai
+        const response = await fetch('http://localhost:8000/get-price/^NSEI');
+        const data = await response.json();
 
-jobs:
-  run-bot:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Install Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.9'
-      - name: Install Libraries
-        run: pip install yfinance pandas-ta requests
-      - name: Execute Script
-        env:
-          TELEGRAM_TOKEN: ${{8600856933:AAFxdDehjmL4EDDGJIrROcvrHvbXYOfLdAU }}
-          CHAT_ID: ${{5598707490 }}
-        run: python bot.py
-  - name: Run Bot Script
-  env:
-    TELEGRAM_TOKEN: ${{ 8600856933:AAFxdDehjmL4EDDGJIrROcvrHvbXYOfLdAU}} # Secret ka prefix
-  run: python bot.py
+        if (data.price) {
+            // UI elements update karein
+            document.getElementById('main-price').innerText = `₹${data.price}`;
+            document.getElementById('sheet-price').innerText = `₹${data.price}`;
+            
+            // Profit/Loss color logic
+            const color = data.p_change >= 0 ? "#22c55e" : "#ef4444";
+            document.getElementById('price-change').style.color = color;
+            document.getElementById('price-change').innerText = 
+                `${data.change > 0 ? '+' : ''}${data.change} (${data.p_change}%)`;
+        }
+    } catch (error) {
+        console.log("Error fetching data:", error);
+    }
+}
+
+// Har 2 second mein price refresh karein (Real-time feel)
+setInterval(updateLivePrice, 2000);
+
   
         
