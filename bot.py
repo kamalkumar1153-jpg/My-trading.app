@@ -1,10 +1,12 @@
 import yfinance as yf
+import pandas_ta as ta
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
 app = FastAPI()
 
-# Frontend se connect karne ke liye CORS allow karein
+# CORS allow करें ताकि GitHub Pages या Localhost से डेटा फेच हो सके
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -12,28 +14,47 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/get-price/{symbol}")
-def get_stock_price(symbol: str):
-    # Indian stocks ke liye .NS (NSE) ya .BO (BSE) lagana zaruri hai
-    ticker = yf.Ticker(f"{symbol}.NS")
-    data = ticker.history(period="1d", interval="1m")
+def fetch_signals(symbol):
+    ticker_sym = "^NSEI" if symbol == "NIFTY" else "^BSESN"
+    ticker = yf.Ticker(ticker_sym)
+    # 15m ट्रेंड के लिए पिछला 5 दिन का डेटा
+    df = ticker.history(period="5d", interval="15m")
     
-    if not data.empty:
-        latest_price = data['Close'].iloc[-1]
-        change = latest_price - data['Open'].iloc[0]
-        p_change = (change / data['Open'].iloc[0]) * 100
+    if df.empty: return None
+
+    # इंडिकेटर्स कैलकुलेशन
+    df['EMA_20'] = ta.ema(df['Close'], length=20)
+    df['RSI'] = ta.rsi(df['Close'], length=14)
+    macd = ta.macd(df['Close'])
+    df['MACD_H'] = macd['MACDh_12_26_9']
+    df['Pivot'] = (df['High'] + df['Low'] + df['Close']) / 3
+
+    latest = df.iloc[-1]
+    
+    # 15m Prediction Logic
+    trend = "NEUTRAL"
+    if latest['Close'] > latest['EMA_20'] and latest['MACD_H'] > 0 and latest['RSI'] < 70:
+        trend = "BULLISH"
+    elif latest['Close'] < latest['EMA_20'] and latest['MACD_H'] < 0 and latest['RSI'] > 30:
+        trend = "BEARISH"
         
-        return {
-            "symbol": symbol,
-            "price": round(latest_price, 2),
-            "change": round(change, 2),
-            "p_change": round(p_change, 2)
-        }
-    return {"error": "Data not found"}
+    return {
+        "price": round(latest['Close'], 2),
+        "rsi": round(latest['RSI'], 1),
+        "macd_h": round(latest['MACD_H'], 2),
+        "pivot": round(latest['Pivot'], 2),
+        "trend": trend,
+        "time": latest.name.strftime('%H:%M:%S')
+    }
+
+@app.get("/get-price/{symbol}")
+async def get_data(symbol: str):
+    data = fetch_signals(symbol.upper())
+    return data if data else {"error": "No Data"}
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
 
                           
