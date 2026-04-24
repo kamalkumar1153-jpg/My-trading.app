@@ -3,92 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Market Terminal v2</title>
+    <title>AI Pro Terminal V2.5</title>
     <style>
-        body { background: #0d1117; color: white; font-family: sans-serif; text-align: center; padding: 15px; margin: 0; }
-        .container { max-width: 420px; margin: auto; }
-        .card { background: #161b22; border: 1px solid #30363d; border-radius: 15px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
-        .label { color: #8b949e; font-size: 14px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-        .price { font-size: 30px; font-weight: bold; color: #3fb950; margin-bottom: 5px; }
-        .rsi-text { font-size: 14px; color: #58a6ff; font-weight: bold; margin-bottom: 12px; }
-        .signal { font-size: 16px; font-weight: 600; padding: 10px; border-radius: 8px; display: block; margin-top: 5px; }
-        .buy { color: #3fb950; background: rgba(63, 185, 80, 0.1); border: 1px solid #238636; }
-        .sell { color: #f85149; background: rgba(248, 81, 73, 0.1); border: 1px solid #da3633; }
-        .neutral { color: #8b949e; background: rgba(139, 148, 158, 0.1); border: 1px solid #484f58; }
-        .status { font-size: 11px; color: #8b949e; margin-top: 20px; }
+        body { background: #0d1117; color: white; font-family: -apple-system, sans-serif; text-align: center; padding: 15px; }
+        .container { max-width: 400px; margin: auto; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .label { color: #8b949e; font-size: 12px; letter-spacing: 1px; margin-bottom: 5px; }
+        .price { font-size: 26px; font-weight: bold; color: #3fb950; margin: 5px 0; }
+        .stats { display: flex; justify-content: space-between; font-size: 12px; color: #58a6ff; margin-top: 10px; border-top: 1px solid #21262d; padding-top: 10px; }
+        
+        /* Momentum Bar */
+        .m-bar { width: 100%; height: 6px; background: #30363d; border-radius: 3px; margin: 10px 0; overflow: hidden; }
+        .m-fill { height: 100%; transition: 0.5s ease; }
+
+        .signal { font-size: 14px; font-weight: bold; padding: 8px; border-radius: 6px; margin-top: 10px; display: block; }
+        .BULLISH { background: rgba(63, 185, 80, 0.1); color: #3fb950; border: 1px solid #238636; }
+        .BEARISH { background: rgba(248, 81, 73, 0.1); color: #f85149; border: 1px solid #da3633; }
+        .NEUTRAL { background: rgba(139, 148, 158, 0.1); color: #8b949e; border: 1px solid #484f58; }
+        .status { font-size: 10px; color: #484f58; margin-top: 20px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2 style="color: #58a6ff;">🚀 AI Pro Terminal</h2>
-        
+        <h3 style="color: #58a6ff;">🚀 AI PRO TERMINAL</h3>
+
         <div class="card">
             <div class="label">NIFTY 50</div>
             <div id="n-p" class="price">₹ --</div>
-            <div id="n-r" class="rsi-text">RSI: --</div>
-            <div id="n-s" class="signal neutral">WAITING...</div>
+            <div class="stats">
+                <span>RSI: <b id="n-r">--</b></span>
+                <span>PIVOT: <b id="n-pv">--</b></span>
+            </div>
+            <div class="m-bar"><div id="n-m" class="m-fill"></div></div>
+            <div id="n-s" class="signal NEUTRAL">WAITING...</div>
         </div>
 
         <div class="card">
             <div class="label">SENSEX</div>
             <div id="s-p" class="price">₹ --</div>
-            <div id="s-r" class="rsi-text">RSI: --</div>
-            <div id="s-s" class="signal neutral">WAITING...</div>
+            <div class="stats">
+                <span>RSI: <b id="s-r">--</b></span>
+                <span>PIVOT: <b id="s-pv">--</b></span>
+            </div>
+            <div class="m-bar"><div id="s-m" class="m-fill"></div></div>
+            <div id="s-s" class="signal NEUTRAL">WAITING...</div>
         </div>
 
-        <div id="msg" class="status">Market Syncing...</div>
+        <div id="msg" class="status">Connecting to Market...</div>
     </div>
 
     <script>
-        const CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTD0ZnUTuU1M7K2Uc5APr3UlEbA3huIUqi8Nzazi9BPrNZXTvEtvbM1RigUPSGfCJWRmFdVOMMoOogL/pub?output=csv';
-
-        function getSignal(price, ema, rsi) {
-            if (price > ema && rsi < 70) return { text: "🔥 STRONG BUY", class: "buy" };
-            if (price < ema && rsi > 30) return { text: "🚨 STRONG SELL", class: "sell" };
-            if (rsi > 75) return { text: "⚠️ OVERBOUGHT", class: "sell" };
-            if (rsi < 25) return { text: "📉 OVERSOLD", class: "buy" };
-            return { text: "⌛ NEUTRAL", class: "neutral" };
-        }
-
-        async function update() {
+        async function update(sym, pre) {
             try {
-                const res = await fetch(CSV);
-                const data = await res.text();
-                const rows = data.split('\n');
+                const res = await fetch(`http://localhost:8000/get-price/${sym}`);
+                const d = await res.json();
+                
+                document.getElementById(`${pre}-p`).innerText = "₹ " + d.price.toLocaleString('en-IN');
+                document.getElementById(`${pre}-r`).innerText = d.rsi;
+                document.getElementById(`${pre}-pv`).innerText = Math.round(d.pivot);
 
-                const nP = parseFloat(rows[0].split(',')[0]);
-                const nE = parseFloat(rows[0].split(',')[1]);
-                const nR = parseFloat(rows[0].split(',')[2]); // Column C
+                // Bar Color (MACD Momentum)
+                const m = document.getElementById(`${pre}-m`);
+                m.style.width = "100%";
+                m.style.backgroundColor = d.macd_h > 0 ? "#3fb950" : "#f85149";
 
-                const sP = parseFloat(rows[1].split(',')[0]);
-                const sE = parseFloat(rows[1].split(',')[1]);
-                const sR = parseFloat(rows[1].split(',')[2]); // Column C
+                // Signal Update
+                const s = document.getElementById(`${pre}-s`);
+                s.innerText = d.trend === "BULLISH" ? "🔥 15M BUY SIGNAL" : d.trend === "BEARISH" ? "📉 15M SELL SIGNAL" : "⌛ SIDEWAYS / WAIT";
+                s.className = "signal " + d.trend;
 
-                if (!isNaN(nP)) {
-                    // Nifty
-                    document.getElementById('n-p').innerText = "₹ " + nP.toLocaleString('en-IN');
-                    document.getElementById('n-r').innerText = "RSI: " + nR.toFixed(1);
-                    const nSig = getSignal(nP, nE, nR);
-                    document.getElementById('n-s').innerText = nSig.text;
-                    document.getElementById('n-s').className = "signal " + nSig.class;
-
-                    // Sensex
-                    document.getElementById('s-p').innerText = "₹ " + sP.toLocaleString('en-IN');
-                    document.getElementById('s-r').innerText = "RSI: " + sR.toFixed(1);
-                    const sSig = getSignal(sP, sE, sR);
-                    document.getElementById('s-s').innerText = sSig.text;
-                    document.getElementById('s-s').className = "signal " + sSig.class;
-
-                    document.getElementById('msg').innerText = "✅ Live Update: " + new Date().toLocaleTimeString();
-                }
-            } catch (e) { document.getElementById('msg').innerText = "❌ Sync Failed"; }
+                document.getElementById('msg').innerText = "✅ Last Update: " + d.time;
+            } catch (e) { document.getElementById('msg').innerText = "❌ Offline: Run bot.py first"; }
         }
-        setInterval(update, 10000); // Fast 10s refresh
-        update();
+
+        function refresh() { update("NIFTY", "n"); update("SENSEX", "s"); }
+        setInterval(refresh, 10000); // 10 सेकंड में रिफ्रेश
+        refresh();
     </script>
 </body>
 </html>
+
 
 
 
