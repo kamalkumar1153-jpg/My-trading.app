@@ -1,24 +1,13 @@
 import yfinance as yf
 import pandas_ta as ta
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
+import json
+from datetime import datetime
 
-app = FastAPI()
-
-# CORS allow करें ताकि GitHub Pages या Localhost से डेटा फेच हो सके
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-def fetch_signals(symbol):
-    ticker_sym = "^NSEI" if symbol == "NIFTY" else "^BSESN"
-    ticker = yf.Ticker(ticker_sym)
-    # 15m ट्रेंड के लिए पिछला 5 दिन का डेटा
-    df = ticker.history(period="5d", interval="15m")
+def get_signals(symbol):
+    # Nifty और Sensex के लिए सही सिंबल
+    t_sym = "^NSEI" if symbol == "NIFTY" else "^BSESN"
+    ticker = yf.Ticker(t_sym)
+    df = ticker.history(period="5d", interval="15m") # 15m प्रेडिक्शन
     
     if df.empty: return None
 
@@ -28,32 +17,34 @@ def fetch_signals(symbol):
     macd = ta.macd(df['Close'])
     df['MACD_H'] = macd['MACDh_12_26_9']
     df['Pivot'] = (df['High'] + df['Low'] + df['Close']) / 3
-
+    
     latest = df.iloc[-1]
     
-    # 15m Prediction Logic
+    # 15m Trend Logic
     trend = "NEUTRAL"
     if latest['Close'] > latest['EMA_20'] and latest['MACD_H'] > 0 and latest['RSI'] < 70:
         trend = "BULLISH"
     elif latest['Close'] < latest['EMA_20'] and latest['MACD_H'] < 0 and latest['RSI'] > 30:
         trend = "BEARISH"
-        
+    
     return {
         "price": round(latest['Close'], 2),
         "rsi": round(latest['RSI'], 1),
         "macd_h": round(latest['MACD_H'], 2),
         "pivot": round(latest['Pivot'], 2),
         "trend": trend,
-        "time": latest.name.strftime('%H:%M:%S')
+        "time": datetime.now().strftime('%H:%M:%S')
     }
 
-@app.get("/get-price/{symbol}")
-async def get_data(symbol: str):
-    data = fetch_signals(symbol.upper())
-    return data if data else {"error": "No Data"}
+# डेटा को JSON में सेव करना
+all_market_data = {
+    "nifty": get_signals("NIFTY"),
+    "sensex": get_signals("SENSEX")
+}
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+with open('data.json', 'w') as f:
+    json.dump(all_market_data, f)
+
 
 
 
