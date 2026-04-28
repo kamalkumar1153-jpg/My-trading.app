@@ -1,27 +1,31 @@
-async function updateLivePrice() {
-    try {
-        // NIFTY 50 ka ticker yfinance mein ^NSEI hai
-        const response = await fetch('http://localhost:8000/get-price/^NSEI');
-        const data = await response.json();
+name: Update Market Data
+on:
+  schedule:
+    - cron: '*/10 * * * *' # हर 10 मिनट में चलेगा
+  workflow_dispatch:
 
-        if (data.price) {
-            // UI elements update karein
-            document.getElementById('main-price').innerText = `₹${data.price}`;
-            document.getElementById('sheet-price').innerText = `₹${data.price}`;
-            
-            // Profit/Loss color logic
-            const color = data.p_change >= 0 ? "#22c55e" : "#ef4444";
-            document.getElementById('price-change').style.color = color;
-            document.getElementById('price-change').innerText = 
-                `${data.change > 0 ? '+' : ''}${data.change} (${data.p_change}%)`;
-        }
-    } catch (error) {
-        console.log("Error fetching data:", error);
-    }
-}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: pip install yfinance pandas-ta
+      - name: Run script
+        run: python bot.py
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add data.json
+          git commit -m "Automated Market Update" || exit 0
+          git push
 
-// Har 2 second mein price refresh karein (Real-time feel)
-setInterval(updateLivePrice, 2000);
 
   
         
